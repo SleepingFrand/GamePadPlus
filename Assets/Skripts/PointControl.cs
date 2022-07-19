@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class PointControl : MonoBehaviour
 {
@@ -14,23 +17,27 @@ public class PointControl : MonoBehaviour
 
     [SerializeField] private Vector2 clickPosition = new Vector2(361, 361);
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
+        AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
         dataStore = FindObjectOfType<DataStore>();
+    }
+
+    void UpdateValue_For_DataStore()
+    {
         if(dataStore.CurrentWay.positionWayPoints.Count > 0)
         {
             PlaseWayPoints(dataStore.CurrentWay.positionWayPoints);
         }
 
-        this.gameObject.AddComponent<LineRenderer>();
     }
 
     void PlaseWayPoints(List<Vector2> pointsPositions)
     {
         foreach (Vector2 pointPos in pointsPositions)
         {
-            Points.Add((Instantiate(PointPrefab, pointPos, Quaternion.identity).transform.parent = Map.transform).gameObject);
+            Points.Add((Instantiate(PointPrefab, new Vector2(pointPos.x, pointPos.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
+                Quaternion.identity).transform.parent = Map.transform).gameObject);
         }
         DrawLineWay(pointsPositions);
     }
@@ -38,22 +45,40 @@ public class PointControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.touchCount > 0)
+        
+    }
+
+    public void GetTouch()
+    {
+        Debug.Log("Click on " + Input.mousePosition);
+
+
+        PointerEventData m_PointerEventData = new PointerEventData(FindObjectOfType<EventSystem>());
+        //Set the Pointer Event Position to that of the mouse position
+        m_PointerEventData.position = Input.mousePosition;
+
+        //Create a list of Raycast Results
+        List<RaycastResult> results = new List<RaycastResult>();
+
+        GraphicRaycaster Graycast = FindObjectOfType<GraphicRaycaster>();
+
+        //Raycast using the Graphics Raycaster and mouse click position
+        Graycast.Raycast(m_PointerEventData, results);
+
+        //For every result returned, output the name of the GameObject on the Canvas hit by the Ray
+        foreach (RaycastResult result in results)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if(Physics.Raycast(ray, out hit, 100, 1 << 5))
+            if(result.gameObject.tag == "Map")
             {
-                if(hit.transform.gameObject.tag == "Map")
-                {
-                    clickPosition = hit.transform.position;
-                    CurrentPoint = null;
-                }
-                else if (hit.transform.gameObject.tag == "Point")
-                {
-                    clickPosition = new Vector2(361, 361);
-                    CurrentPoint = hit.transform.gameObject;
-                }
+                clickPosition = result.worldPosition;
+                CurrentPoint = null;
+                break;
+            }
+            else if(result.gameObject.tag == "WayPoint")
+            {
+                CurrentPoint = result.gameObject;
+                clickPosition = new Vector2(361, 361);
+                break;
             }
         }
     }
@@ -68,7 +93,7 @@ public class PointControl : MonoBehaviour
         {
             PosOnVect3.Add(new Vector3(item.x, item.y, 0));
         }
-
+        this.gameObject.GetComponent<LineRenderer>().positionCount = PosOnVect3.Count;
         this.gameObject.GetComponent<LineRenderer>().SetPositions(PosOnVect3.ToArray());
     }
 
@@ -80,6 +105,7 @@ public class PointControl : MonoBehaviour
             dataStore.CurrentWay.positionWayPoints.Add(clickPosition);
         }
         DrawLineWay(dataStore.CurrentWay.positionWayPoints);
+        clickPosition = new Vector2(361, 361);
     }
 
     public void DeletePoint()
@@ -90,6 +116,7 @@ public class PointControl : MonoBehaviour
             Destroy(CurrentPoint);
         }
         DrawLineWay(dataStore.CurrentWay.positionWayPoints);
+        CurrentPoint = null;
     }
 
 

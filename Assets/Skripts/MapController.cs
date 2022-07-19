@@ -8,9 +8,14 @@ public class MapController : MonoBehaviour
     [SerializeField] private DataStore dataStore;
     public bool UpdateNow = false;
 
-    void Start()
+    private void Start()
     {
+        AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
         dataStore = FindObjectOfType<DataStore>();
+    }
+
+    void UpdateValue_For_DataStore()
+    {
     }
 
     // Update is called once per frame

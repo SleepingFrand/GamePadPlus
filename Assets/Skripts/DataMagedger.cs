@@ -6,6 +6,18 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEditor;
 
+public struct Shotcat
+{
+    public string MapName;
+    public List<string> WayName;
+
+    public Shotcat(string Mapname)
+    {
+        MapName = Mapname;
+        WayName = new List<string>();
+    }
+}
+
 [System.Serializable]
 public struct MAP
 {
@@ -205,10 +217,12 @@ public class DataMagedger : MonoBehaviour
     /// <returns>tru всЄ прошло успешно false произошла ошибка</returns>
     public bool TryLoadWay(string name_map, string name_way, out WAY way)
     {
-        string pathMap = Path.Combine(path_local, path_map_cashe, name_map, name_way);//получение строки к файлу конфигу карты
+        string pathMap = Path.Combine(path_local, path_map_cashe, name_map, name_way + ".json");//получение строки к файлу конфигу карты
+
+        pathMap = Path.GetFullPath(pathMap);
         if (CheakExistFile(pathMap))
         {
-            way = JsonConvert.DeserializeObject<WAY>(pathMap);
+            way = JsonConvert.DeserializeObject<WAY>(File.ReadAllText(pathMap));
             return true;
         }
         else
@@ -244,7 +258,7 @@ public class DataMagedger : MonoBehaviour
     /// <param name="name_map">им€ карты</param>
     /// <param name="name_way">им€ пути</param>
     /// <returns>true кдаление прошло успешно false удаление не произошло в св€зи с какой либо ошибкой</returns>
-    public bool TruRemoveWay(string name_map, string name_way)
+    public bool TryRemoveWay(string name_map, string name_way)
     {
         string pathWay = Path.Combine(path_local, path_map_cashe, name_map, name_way);//получение строки к файлу конфигу карты
 
@@ -265,7 +279,7 @@ public class DataMagedger : MonoBehaviour
     /// <param name="filepath">директори€ с именем файла</param>
     /// <param name="img">возвращ€емое значение</param>
     /// <returns>tru всЄ прошло удачно , false  пролизошла ошибка  </returns>
-    public bool ChangeImage(ref MAP map) 
+    public bool CreateMap(ref MAP map) 
     {
         Texture2D texture = null;
         byte[] fileData;
@@ -285,6 +299,26 @@ public class DataMagedger : MonoBehaviour
         }
     }
 
+
+
+    public List<Shotcat> GetShortName()
+    {
+        List<Shotcat> out_value = new List<Shotcat>();
+        FileInfo tempInfo;
+
+        string pathFolder = Path.Combine(path_local, path_map_cashe);//получение строки папки с картами
+
+        foreach (DirectoryInfo item in new DirectoryInfo(pathFolder).GetDirectories())
+        {
+            out_value.Add(new Shotcat(item.Name));
+            foreach (FileInfo item2 in item.GetFiles())
+            {
+                if(item2.Name != _MapFileName)
+                    out_value[out_value.Count - 1].WayName.Add(Path.GetFileNameWithoutExtension(item2.Name));
+            }
+        }
+        return out_value;
+    }
 
     /// <summary>
     /// провер€ет на то ,что по локальной директории  приложени€ имеютс€ необходимые папки 
@@ -308,6 +342,7 @@ public class DataMagedger : MonoBehaviour
             baseMap.names_WAY = new List<string>();
             WAY baseWay = new WAY();
             baseWay.name_WAY = "BaseWay";
+            baseMap.names_WAY.Add(baseWay.name_WAY);
             SaveWay(baseMap, baseWay);
 
            return false; 
