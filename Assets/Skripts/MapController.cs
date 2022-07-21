@@ -16,6 +16,7 @@ public class MapController : MonoBehaviour
 
     void UpdateValue_For_DataStore()
     {
+        SetImage();
     }
 
     // Update is called once per frame

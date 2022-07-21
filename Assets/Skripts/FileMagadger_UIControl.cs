@@ -36,7 +36,7 @@ public class FileMagadger_UIControl : MonoBehaviour
         return Mathf.CeilToInt(zone.height / (obj.height + Mathf.Abs(obj.y)));
     }
 
-    GameObject CreateShotcat(int count, string text)
+    GameObject CreateShotcat(int count, string text, bool IsMap)
     {
         Rect rect = ShotCatPrefab.GetComponent<RectTransform>().rect;
 
@@ -63,7 +63,10 @@ public class FileMagadger_UIControl : MonoBehaviour
         lable.transform.SetParent(ShotcatZone.transform, false);
         lable.GetComponent<Text>().text = text;
         lable.SetActive(false);
-        lable.GetComponent<Button>().onClick.AddListener(() => dataStore.ChengeMap(text));
+        if(IsMap)
+            lable.GetComponent<Button>().onClick.AddListener(() => dataStore.ChengeMap(text));
+        else
+            lable.GetComponent<Button>().onClick.AddListener(() => dataStore.ChengeWay(text));
         return lable;
     }
 
@@ -91,10 +94,10 @@ public class FileMagadger_UIControl : MonoBehaviour
             List<GameObject> ways = new List<GameObject>();
             foreach (string way in item.WayName)
             {
-                ways.Add(CreateShotcat(count_way++, way));
+                ways.Add(CreateShotcat(count_way++, way, false));
             }
 
-            Shotcats.Add(CreateShotcat(count_map++, item.MapName), ways);
+            Shotcats.Add(CreateShotcat(count_map++, item.MapName, true), ways);
         }
     }
 

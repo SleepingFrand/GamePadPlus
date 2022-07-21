@@ -23,6 +23,7 @@ public class SettingsController : MonoBehaviour
     private void Start()
     {
         AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
+        AtionsSystem.UpdateValueOnSettings += UpdateValue_For_DataStore;
         dataStore = FindObjectOfType<DataStore>();
     }
 
@@ -49,40 +50,64 @@ public class SettingsController : MonoBehaviour
         Rect rect = new Rect();
         rect.x = float.Parse(Left_Edit.GetComponent<InputField>().text);
         rect.y = float.Parse(Top_Edit.GetComponent<InputField>().text);
-        rect.width = float.Parse(Right_Edit.GetComponent<InputField>().text);
-        rect.height = float.Parse(Bottom_Edit.GetComponent<InputField>().text);
+        rect.xMax = float.Parse(Right_Edit.GetComponent<InputField>().text);
+        rect.yMax = float.Parse(Bottom_Edit.GetComponent<InputField>().text);
         return rect;
     }
 
     void SetGrafValue(float left, float top, float right, float bottom)
     {
-        Left_Edit.GetComponent<InputField>().text     = left.ToString();
-        Top_Edit.GetComponent<InputField>().text      = top.ToString();
-        Right_Edit.GetComponent<InputField>().text    = right.ToString();
-        Bottom_Edit.GetComponent<InputField>().text   = bottom.ToString();
+        Left_Edit.GetComponent<InputField>().text       = left.ToString();
+        Top_Edit.GetComponent<InputField>().text        = top.ToString();
+        Right_Edit.GetComponent<InputField>().text      = right.ToString();
+        Bottom_Edit.GetComponent<InputField>().text     = bottom.ToString();
     }
 
     void SetGrafValue(Rect rect)
     {
-        Left_Edit.GetComponent<InputField>().text = rect.left.ToString();
-        Top_Edit.GetComponent<InputField>().text = rect.top.ToString();
-        Right_Edit.GetComponent<InputField>().text = rect.right.ToString();
-        Bottom_Edit.GetComponent<InputField>().text = rect.bottom.ToString();
+        Left_Edit.GetComponent<InputField>().text       = rect.left.ToString();
+        Top_Edit.GetComponent<InputField>().text        = rect.top.ToString();
+        Right_Edit.GetComponent<InputField>().text      = rect.right.ToString();
+        Bottom_Edit.GetComponent<InputField>().text     = rect.bottom.ToString();
     }
 
-    public void ChangeImmage()
+    public void LoadNewMap()
     {
-
+        dataStore.CreateMap();
     }
 
     public void SaveMap()
     {
-
+        dataStore.CurrentMap.RectMap = GetGrafValue();
+        dataStore.SaveMap();
     }
 
     public void SaveWay()
     {
-
+        dataStore.SaveWay();
     }
 
+    public void ChangeNameMap(string value) 
+    {
+        dataStore.ChangeNameMap(value);
+    }
+    public void ChangeNameWay(string value)
+    {
+        dataStore.ChangeNameWay(value);
+    }
+
+    public void CreateWay()
+    {
+        dataStore.CreateWay();
+    }
+
+    public void DeleteMap()
+    {
+        dataStore.DeleteCurrentMap();
+    }
+
+    public void DeleteWay()
+    {
+        dataStore.DeleteCurrentWay();
+    }
 }

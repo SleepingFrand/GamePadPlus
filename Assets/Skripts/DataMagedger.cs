@@ -152,7 +152,6 @@ public class DataMagedger : MonoBehaviour
         if (!Directory.Exists(pathFolder))
         {
             Directory.CreateDirectory(pathFolder);
-            pathsMap.Add(map.name_map);
         }
 
         SerializeMap smap = new SerializeMap();
@@ -174,7 +173,6 @@ public class DataMagedger : MonoBehaviour
         if (Directory.Exists(pathFolder) /*проверка на существование директории*/) 
         {
             File.WriteAllText(pathWay, JsonUtility.ToJson(way));//сохранение файла карты
-            map.names_WAY.Add(way.name_WAY);
         }
         else
         {
@@ -240,9 +238,12 @@ public class DataMagedger : MonoBehaviour
     public bool TryRemoveMap(string name_map)
     {
         string pathFolder = Path.Combine(path_local, path_map_cashe, name_map);//получение строки к файлу конфигу карты
-        
+
+        pathFolder = Path.GetFullPath(pathFolder);
+
         if (Directory.Exists(pathFolder))
         {
+            pathsMap.Remove(name_map);
             Directory.Delete(pathFolder,true);
             return true;
         }
@@ -260,10 +261,13 @@ public class DataMagedger : MonoBehaviour
     /// <returns>true кдаление прошло успешно false удаление не произошло в св€зи с какой либо ошибкой</returns>
     public bool TryRemoveWay(string name_map, string name_way)
     {
-        string pathWay = Path.Combine(path_local, path_map_cashe, name_map, name_way);//получение строки к файлу конфигу карты
+        string pathWay = Path.Combine(path_local, path_map_cashe, name_map, name_way + ".json");//получение строки к файлу конфигу карты
+
+        pathWay = Path.GetFullPath(pathWay);
 
         if (File.Exists(pathWay))
         {
+            
             File.Delete(pathWay);
             return true;
         }
@@ -273,24 +277,80 @@ public class DataMagedger : MonoBehaviour
         }
     }
 
+    public bool ChangeName(MAP map, string new_name)
+    {
+        string pathMap = Path.Combine(path_local, path_map_cashe, map.name_map);
+
+        pathMap = Path.GetFullPath(pathMap);
+
+        if (Directory.Exists(pathMap))
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(pathMap);
+
+            dirInfo.MoveTo(Path.Combine(dirInfo.Parent.FullName, new_name));
+        }
+
+        map.name_map = new_name;
+
+        SaveMap(map);
+
+        return true;
+    }
+
+    public bool ChangeName(MAP map, string new_name, WAY way)
+    {
+        string pathWay = Path.Combine(path_local, path_map_cashe, map.name_map, way.name_WAY + ".json");
+
+        pathWay = Path.GetFullPath(pathWay);
+
+        if (File.Exists(pathWay))
+        {
+            FileInfo fileInfo = new FileInfo(pathWay);
+
+            fileInfo.MoveTo(Path.Combine(Path.Combine(path_local, path_map_cashe, map.name_map), new_name + ".json"));
+        }
+
+        map.names_WAY[map.names_WAY.FindIndex((string wayname) => { return wayname == way.name_WAY; })] = new_name;
+
+        way.name_WAY = new_name;
+
+        SaveMap(map);
+        SaveWay(map, way);
+
+        return true;
+    }
+
     /// <summary>
     /// загрузка изображени€ из файла по директории
     /// </summary>
     /// <param name="filepath">директори€ с именем файла</param>
     /// <param name="img">возвращ€емое значение</param>
     /// <returns>tru всЄ прошло удачно , false  пролизошла ошибка  </returns>
-    public bool CreateMap(ref MAP map) 
+    public bool CreateMap(out MAP map) 
     {
+        map = new MAP();
         Texture2D texture = null;
         byte[] fileData;
-        string filepath = EditorUtility.OpenFilePanel("Image map", "" , "*.png, *.jpeg, *.jpg");
+        string filepath = EditorUtility.OpenFilePanelWithFilters("Image map", "" , new string[] { "Image files", "png,jpg,jpeg", "All files", "*" });
 
         if (File.Exists(filepath))
-        {
+        { 
             fileData = File.ReadAllBytes(filepath);
             texture = new Texture2D(2, 2);
             texture.LoadImage(fileData); //..this will auto-resize the texture dimensions.
             map.image_Map = Sprite.Create(texture, new Rect(0,0,texture.width, texture.height), new Vector2(0.5f, 0.5f), 100.0f);
+
+            FileInfo fileinfo = new FileInfo(filepath);
+            map.name_map = Path.GetFileNameWithoutExtension(fileinfo.Name);
+
+            map.RectMap = new Rect(0, 0, 0, 0);
+            map.names_WAY = new List<string>();
+
+            WAY newWay = new WAY();
+            newWay.name_WAY = "StartWay";
+            map.names_WAY.Add(newWay.name_WAY);
+            SaveWay(map, newWay);
+
             return true;
         }
         else
@@ -299,7 +359,7 @@ public class DataMagedger : MonoBehaviour
         }
     }
 
-
+    
 
     public List<Shotcat> GetShortName()
     {

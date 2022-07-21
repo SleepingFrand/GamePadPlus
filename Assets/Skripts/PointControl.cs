@@ -25,7 +25,8 @@ public class PointControl : MonoBehaviour
 
     void UpdateValue_For_DataStore()
     {
-        if(dataStore.CurrentWay.positionWayPoints.Count > 0)
+        CleanPoints();
+        if (dataStore.CurrentWay.positionWayPoints.Count > 0)
         {
             PlaseWayPoints(dataStore.CurrentWay.positionWayPoints);
         }
@@ -37,10 +38,23 @@ public class PointControl : MonoBehaviour
         foreach (Vector2 pointPos in pointsPositions)
         {
             Points.Add((Instantiate(PointPrefab, new Vector2(pointPos.x, pointPos.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
-                Quaternion.identity).transform.parent = Map.transform).gameObject);
+                Quaternion.identity).transform.parent = Map.transform).GetChild(Map.transform.childCount - 1).gameObject);
         }
         DrawLineWay(pointsPositions);
     }
+
+    void CleanPoints()
+    {
+        this.gameObject.GetComponent<LineRenderer>().positionCount = 0;
+
+        foreach (GameObject item in Points)
+        {
+            Destroy(item);
+        }
+        Points.Clear();
+    }
+
+
 
     // Update is called once per frame
     void Update()
@@ -101,22 +115,30 @@ public class PointControl : MonoBehaviour
     {
         if (clickPosition != new Vector2(361, 361)) 
         { 
-            Points.Add((Instantiate(PointPrefab, clickPosition, Quaternion.identity).transform.parent = Map.transform).gameObject);
+            Points.Add((Instantiate(PointPrefab, clickPosition, Quaternion.identity).transform.parent = Map.transform).GetChild(Map.transform.childCount - 1).gameObject);
             dataStore.CurrentWay.positionWayPoints.Add(clickPosition);
         }
         DrawLineWay(dataStore.CurrentWay.positionWayPoints);
         clickPosition = new Vector2(361, 361);
+
+        AtionsSystem.UpdateValueOnSettings();
     }
 
     public void DeletePoint()
     {
         if (CurrentPoint != null)
         {
-            dataStore.CurrentWay.positionWayPoints.Remove(CurrentPoint.transform.position);
+            Vector2 item = CurrentPoint.transform.position;
+            item.y -= PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2;
+            dataStore.CurrentWay.positionWayPoints.Remove(dataStore.CurrentWay.positionWayPoints.Find((Vector2 itemFind) => { return itemFind == item; }));
+            Points.Remove(Points.Find((GameObject itemFind) => { return itemFind == CurrentPoint; }));
             Destroy(CurrentPoint);
+
+            DrawLineWay(dataStore.CurrentWay.positionWayPoints);
+            CurrentPoint = null;
+
+            AtionsSystem.UpdateValueOnSettings();
         }
-        DrawLineWay(dataStore.CurrentWay.positionWayPoints);
-        CurrentPoint = null;
     }
 
 
