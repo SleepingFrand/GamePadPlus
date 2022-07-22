@@ -59,7 +59,8 @@ public class PointControl : MonoBehaviour
     {
         foreach (Vector2 pointPos in pointsPositions)
         {
-            Points.Add((Instantiate(PointPrefab, new Vector2(pointPos.x, pointPos.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
+            Vector2 pos = GeoPositionToWord(pointPos);
+            Points.Add((Instantiate(PointPrefab, new Vector2(pos.x, pos.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
                 Quaternion.identity).transform.parent = Map.transform).GetChild(Map.transform.childCount - 1).gameObject);
         }
         DrawLineWay(pointsPositions);
@@ -77,6 +78,69 @@ public class PointControl : MonoBehaviour
         }
         Points.Clear();
     }
+    /// <summary>
+    /// Перевод координат экрана в географические координаты
+    /// </summary>
+    Vector2 ScreenToGegrathPosintion(Vector2 ScreenPosition)
+    {
+        Rect MapRect = Map.GetComponent<RectTransform>().rect;
+        Rect Geo_RectMap = dataStore.CurrentMap.RectMap;
+        Vector2 GeoPosition = new Vector2();
+
+        if(Geo_RectMap.x > Geo_RectMap.width)
+        {
+            float temp = Geo_RectMap.x;
+            Geo_RectMap.x = Geo_RectMap.width;
+            Geo_RectMap.width = temp;
+        }
+        if (Geo_RectMap.y > Geo_RectMap.height)
+        {
+            float temp = Geo_RectMap.y;
+            Geo_RectMap.y = Geo_RectMap.height;
+            Geo_RectMap.height = temp;
+        }
+
+        double diference = ScreenPosition.x / MapRect.width;
+        GeoPosition.x = (float)((Geo_RectMap.width - Geo_RectMap.x) * diference) + Geo_RectMap.x;
+
+        diference = ScreenPosition.y / MapRect.height;
+        GeoPosition.y = (float)((Geo_RectMap.height - Geo_RectMap.y) * diference) + Geo_RectMap.y;
+
+        return GeoPosition;
+    }
+    /// <summary>
+    /// Перевод географических координат в мировые
+    /// </summary>
+    Vector2 GeoPositionToWord(Vector2 GeoPosition)
+    {
+        Rect Geo_RectMap = dataStore.CurrentMap.RectMap;
+
+        Vector2 outVect = new Vector2();
+
+        if (Geo_RectMap.x > Geo_RectMap.width)
+        {
+            float temp = Geo_RectMap.x;
+            Geo_RectMap.x = Geo_RectMap.width;
+            Geo_RectMap.width = temp;
+        }
+        if (Geo_RectMap.y > Geo_RectMap.height)
+        {
+            float temp = Geo_RectMap.y;
+            Geo_RectMap.y = Geo_RectMap.height;
+            Geo_RectMap.height = temp;
+        }
+
+        double correct = (GeoPosition.x - Geo_RectMap.x) / (Geo_RectMap.width - Geo_RectMap.x);
+        outVect.x = (float)(Map.GetComponent<RectTransform>().rect.width * correct);
+
+        correct = (GeoPosition.y - Geo_RectMap.y) / (Geo_RectMap.height - Geo_RectMap.y);
+        outVect.y = (float)(Map.GetComponent<RectTransform>().rect.height * correct);
+
+        outVect = Camera.main.ScreenToWorldPoint(outVect);
+
+        return outVect;
+    }
+
     #endregion
 
     #region Публичные методы
@@ -98,7 +162,7 @@ public class PointControl : MonoBehaviour
         {
             if(result.gameObject.tag == "Map")
             {
-                clickPosition = result.worldPosition;
+                clickPosition = ScreenToGegrathPosintion(result.screenPosition);
                 CurrentPoint = null;
                 break;
             }
@@ -122,7 +186,8 @@ public class PointControl : MonoBehaviour
 
         foreach (Vector2 item in pointsPositions)
         {
-            PosOnVect3.Add(new Vector3(item.x, item.y, 0));
+            Vector2 pos = GeoPositionToWord(item);
+            PosOnVect3.Add(new Vector3(pos.x, pos.y, 0));
         }
         this.gameObject.GetComponent<LineRenderer>().positionCount = PosOnVect3.Count;
         this.gameObject.GetComponent<LineRenderer>().SetPositions(PosOnVect3.ToArray());
@@ -133,8 +198,9 @@ public class PointControl : MonoBehaviour
     public void CreatePoint()
     {
         if (clickPosition != new Vector2(361, 361)) 
-        { 
-            Points.Add((Instantiate(PointPrefab, new Vector2(clickPosition.x, clickPosition.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
+        {
+            Vector2 pos = GeoPositionToWord(clickPosition);
+            Points.Add((Instantiate(PointPrefab, new Vector2(pos.x, pos.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
                 Quaternion.identity).transform.parent = Map.transform).GetChild(Map.transform.childCount - 1).gameObject);
             dataStore.CurrentWay.positionWayPoints.Add(clickPosition);
         }

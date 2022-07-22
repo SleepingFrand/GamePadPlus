@@ -16,6 +16,7 @@ public class FileMagadger_UIControl : MonoBehaviour
     /// Панель для генерации ярлыков
     /// </summary>
     [SerializeField] private GameObject ShotcatZone;
+    private Rect ShotcatZoneRectBase;
     /// <summary>
     /// Главная панель менеджера
     /// </summary>
@@ -39,6 +40,9 @@ public class FileMagadger_UIControl : MonoBehaviour
     /// Коррактеровка позиции ярлыка
     /// </summary>
     [SerializeField] private Vector2 AdjustPosition;
+
+    [SerializeField] private int List = 1;
+    private int ListMax = 1;
     #endregion
 
     #region Приватные поля
@@ -58,6 +62,7 @@ public class FileMagadger_UIControl : MonoBehaviour
         RectTransform = this.gameObject.GetComponent<RectTransform>();
         dataStore = FindObjectOfType<DataStore>();
         AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
+        ShotcatZoneRectBase = ShotcatZone.GetComponent<RectTransform>().rect;
     }
 
     /// <summary>
@@ -68,8 +73,19 @@ public class FileMagadger_UIControl : MonoBehaviour
     /// <returns></returns>
     int GetCountHieght(Rect obj, Rect zone)
     {
-        return Mathf.CeilToInt(zone.height / (obj.height + Mathf.Abs(obj.y)));
+        return Mathf.RoundToInt(zone.height / (obj.height + Mathf.Abs(obj.y)));
     }
+    /// <summary>
+    /// Получить количество объектов, которые поместяться на странице
+    /// </summary>
+    /// <param name="obj">Размеры объекта</param>
+    /// <param name="zone">Размеры зоны</param>
+    /// <returns></returns>
+    int GetCountListSize(Rect obj, Rect zone)
+    {
+        return Mathf.RoundToInt(zone.width / (obj.width + Mathf.Abs(obj.x)));
+    }
+
     /// <summary>
     /// Создает ярлык в соответствие с его номером на поле
     /// </summary>
@@ -85,10 +101,20 @@ public class FileMagadger_UIControl : MonoBehaviour
 
         Rect target_Rect = rect;
 
-        int temp = -1;
+        int temp = - 1;
         int temp_max = GetCountHieght(rect, ShotcatZone.GetComponent<RectTransform>().rect);
+        int max_ON_list = GetCountListSize(rect, ShotcatZone.GetComponent<RectTransform>().rect) * temp_max;
 
-        for (int i = 0; i < count; i++)
+        
+
+        float list = (count - 1) / max_ON_list;
+
+        if(list > 0)
+        {
+            target_Rect.x += ShotcatZone.GetComponent<RectTransform>().rect.width * list;
+        }
+
+        for (int i = 0; i < count - (list * max_ON_list); i++)
         {
             temp++;
             if (temp == temp_max)
@@ -146,6 +172,32 @@ public class FileMagadger_UIControl : MonoBehaviour
             Shotcats.Add(CreateShotcat(count_map++, item.MapName, true), ways);
         }
     }
+
+    public void SetSize(RectTransform trans, Vector2 newSize)
+    {
+        Vector2 oldSize = trans.rect.size;
+        Vector2 deltaSize = newSize - oldSize;
+        trans.offsetMax = trans.offsetMax + new Vector2(deltaSize.x * (1f - trans.pivot.x), deltaSize.y * (1f - trans.pivot.y)) * 2;
+    }
+
+    void ReSizeZone(bool ISmap)
+    {
+        int count_of_list_max = GetCountListSize(ShotCatPrefab.GetComponent<RectTransform>().rect, ShotcatZone.GetComponent<RectTransform>().rect);
+        count_of_list_max *= GetCountHieght(ShotCatPrefab.GetComponent<RectTransform>().rect, ShotcatZone.GetComponent<RectTransform>().rect) - 1;
+
+        ListMax = 1;
+
+        if (ISmap)
+        {
+            ListMax = (Shotcats.Count / count_of_list_max) + 1;
+        }
+        else
+        {
+            ListMax = (Shotcats[CurrentMapShotcat].Count / count_of_list_max) + 1;
+        }
+
+        SetSize(ShotcatZone.GetComponent<RectTransform>(), new Vector2(ShotcatZoneRectBase.width * ListMax, ShotcatZoneRectBase.height));
+    }
     /// <summary>
     /// Обновляет данные, получаемые из главного хранилища
     /// </summary>
@@ -162,7 +214,6 @@ public class FileMagadger_UIControl : MonoBehaviour
                 break;
             }
         }
-         
 
         SetZonetate(1);
     }
@@ -177,6 +228,12 @@ public class FileMagadger_UIControl : MonoBehaviour
         {
             item.SetActive(state);
         }
+    }
+
+    void SetList()
+    {
+        float startX = (ShotcatZoneRectBase.width * Mathf.Round(ListMax / 2));
+        ShotcatZone.GetComponent<RectTransform>().localPosition = new Vector3(startX - (ShotcatZoneRectBase.width * (List - 1)), ShotcatZone.GetComponent<RectTransform>().localPosition.y, ShotcatZone.GetComponent<RectTransform>().localPosition.z);
     }
     #endregion
 
@@ -202,12 +259,16 @@ public class FileMagadger_UIControl : MonoBehaviour
             case 1:
                 SetActuve(new List<GameObject>(Shotcats.Keys), true);
                 SetActuve(new List<GameObject>(Shotcats[CurrentMapShotcat]), false);
+                ReSizeZone(true);
                 break;
             case 2:
                 SetActuve(new List<GameObject>(Shotcats.Keys), false);
                 SetActuve(new List<GameObject>(Shotcats[CurrentMapShotcat]), true);
+                ReSizeZone(false);
                 break;
         }
+        List = 1;
+        SetList();
     }
     /// <summary>
     /// Отобразает\прячет менеджер
@@ -218,6 +279,20 @@ public class FileMagadger_UIControl : MonoBehaviour
         PanelMain.SetActive(MainState);
 
         RectTransform.anchoredPosition -= new Vector2(0, PanelMain.GetComponent<RectTransform>().rect.yMax * (MainState?2:-2));
+    }
+
+    public void NextList()
+    {
+        if(ShotcatZone.GetComponent<RectTransform>().offsetMax.x > 0)
+            List++;
+        SetList();
+    }
+
+    public void BackList()
+    {
+        if (List != 1)
+            List--;
+        SetList();
     }
     #endregion
 }

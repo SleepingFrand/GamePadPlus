@@ -84,7 +84,7 @@ public class CharacterController : MonoBehaviour
         outVect.x = (float)(Map.GetComponent<RectTransform>().rect.width / correct) + Map.GetComponent<RectTransform>().rect.x;
 
         correct = RePosition.y / Size.y;
-        outVect.x = (float)(Map.GetComponent<RectTransform>().rect.height / correct) + Map.GetComponent<RectTransform>().rect.y;
+        outVect.y = (float)(Map.GetComponent<RectTransform>().rect.height / correct) + Map.GetComponent<RectTransform>().rect.y;
 
         return outVect;
     }

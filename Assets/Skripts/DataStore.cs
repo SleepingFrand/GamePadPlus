@@ -169,8 +169,11 @@ public class DataStore : MonoBehaviour
 
         newWay.positionWayPoints = new List<Vector2>();
         newWay.name_WAY = "NewWay_" + CurrentMap.names_WAY.Count.ToString();
-
+        
         _dataManedger.SaveWay(CurrentMap, newWay);
+
+        CurrentMap.names_WAY.Add(newWay.name_WAY);
+        _dataManedger.SaveMap(CurrentMap);
 
         shotcats = _dataManedger.GetShortName();
 
