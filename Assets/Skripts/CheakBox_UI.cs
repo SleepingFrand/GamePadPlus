@@ -1,16 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
+/// <summary>
+/// Реализует функционал ChekBox
+/// </summary>
 public class CheakBox_UI : MonoBehaviour
 {
+    //Картинки для состояний чекбокса
     [SerializeField] private Sprite ImageON;
     [SerializeField] private Sprite ImageOFF;
-
+    //текущее состояние
     [SerializeField] private bool State = false;
-
+    // события при состоянии
     [SerializeField] private UnityEvent EventON;
     [SerializeField] private UnityEvent EventOFF;
 

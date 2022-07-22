@@ -1,11 +1,13 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEditor;
 
+#region Классы
+/// <summary>
+/// Класс хранит имя карты и список имен маршрутов к ней
+/// </summary>
 public struct Shotcat
 {
     public string MapName;
@@ -18,73 +20,84 @@ public struct Shotcat
     }
 }
 
+/// <summary>
+/// Класс хранит данные карты
+/// </summary>
 [System.Serializable]
 public struct MAP
 {
     /// <summary>
-    /// наименование карты
+    /// Наименование карты
     /// </summary>
     public string name_map;
     /// <summary>
-    /// изображение карты
+    /// Изображение карты
     /// </summary>
     public Sprite image_Map;
     /// <summary>
-    /// массив точек углов карты 
+    /// RECT географический границ карты
     /// </summary>
     public Rect RectMap;
     /// <summary>
-    /// имена путей для карты (файлов)
+    /// Имена маршрутов для карты
     /// </summary>
     public List<string> names_WAY;
 }
 
+/// <summary>
+/// Класс хранящий данные маршрута
+/// </summary>
 [System.Serializable]
 public struct WAY
 {
     /// <summary>
-    /// имя пути
+    /// Имя маршрута
     /// формат *.json
     /// </summary>
     public string name_WAY;
     /// <summary>
-    /// массив точек последовательности пути от 1 до последней
+    /// Список позиций точек маршрута
     /// </summary>
     public List<Vector2> positionWayPoints;
 }
+#endregion
 
+/// <summary>
+/// Класс описывающий взаимодействие с файловой системой приложения
+/// </summary>
 public class DataMagedger : MonoBehaviour
 {
-    #region cashe-path
+    #region Приватные поля
     /// <summary>
-    /// локальный путь приложения
+    /// Локальный путь приложения
     /// </summary>
     private string path_local;
     /// <summary>
-    /// имя папки с файлами карт
+    /// Имя папки с файлами карт
     /// </summary>
     private string path_map_cashe = "Maps";
     /// <summary>
-    /// расширение файла  карты
+    /// Имя файла хранящий класс карты
     /// </summary>
     private string _MapFileName = "map.json";
+    /// <summary>
+    /// Стандартное изображение для карты
+    /// </summary>
+    [SerializeField] private Texture2D BaseImage; // Требуеться для создания карты, в случае отсутствия карт
     #endregion
 
-    #region variables
+    #region Поля
     /// <summary>
-    ///  хранит в себе все созданные карты и наименования их путей
+    ///  Хранит имена все созданные карты
     /// </summary>
     public List<string> pathsMap = new List<string>();
     #endregion
 
-    [SerializeField] private Texture2D BaseImage;
-
-    #region sup_voids
+    #region Вспомогательные функции
     /// <summary>
-    /// проверка на то что директория существует и на то что в ней есть необходимый не пустой файл 
+    /// Проверка на существование файла и его заполненость
     /// </summary>
-    /// <param name="path_file"> полноя директория ведущая к файлу</param>
-    /// <returns>true в случае успешности всех проверок false в случае не успешности хотябы 1 проверки</returns>
+    /// <param name="path_file"> Полный путь к файлу</param>
     private bool CheakExistFile( string path_file) 
     {
         if ( File.Exists(path_file) == true /*есть файл*/
@@ -99,20 +112,29 @@ public class DataMagedger : MonoBehaviour
     }
     #endregion
 
-    #region void
+    #region Методы
 
+    /// <summary>
+    /// Сериализованная форма класса MAP, для записи в json файл
+    /// </summary>
     [System.Serializable]
     class SerializeMap
     {
-        public float x, y;
+        // Данные изображения
+        public float x, y; 
         public byte[] bytes_image;
 
         public string name;
 
+        //Географицеские коордиинаты краев карты
         public Rect geograf;
 
         public List<string> names_WAY;
 
+        /// <summary>
+        /// Заполнить класс, исходя из полученной карты
+        /// </summary>
+        /// <param name="map"></param>
        public void CreateSerializeMap(MAP map)
         {
             this.x = map.image_Map.rect.width;
@@ -123,6 +145,9 @@ public class DataMagedger : MonoBehaviour
             this.name = map.name_map;
         }
 
+        /// <summary>
+        /// Возвращает класс MAP, исходя из имеющихся данных
+        /// </summary>
         public MAP DeSerializeMap()
         {
             MAP map = new MAP();
@@ -140,14 +165,13 @@ public class DataMagedger : MonoBehaviour
     }
 
     /// <summary>
-    /// сохраняет конфиг карты
+    /// Сохраняет карту в файл
     /// </summary>
-    /// <param name="map">конфиг карты</param>
-    /// <returns>tru сохранение прошло успешно false провалилось</returns>
+    /// <param name="map">Экземпляр карты для созхранения</param>
     public void SaveMap(MAP map) 
     {
-        string pathMap = Path.Combine(path_local, path_map_cashe, map.name_map, _MapFileName); //получение строки к файлу конфигу карты
-        string pathFolder = Path.Combine(path_local, path_map_cashe, map.name_map);     //директори папки
+        string pathMap = Path.Combine(path_local, path_map_cashe, map.name_map, _MapFileName);  //получение строки к файлу конфигу карты
+        string pathFolder = Path.Combine(path_local, path_map_cashe, map.name_map);             //директори папки
 
         if (!Directory.Exists(pathFolder))
         {
@@ -160,90 +184,87 @@ public class DataMagedger : MonoBehaviour
         File.WriteAllText(pathMap,JsonUtility.ToJson(smap));                         //сохранение файла карты
     }
     /// <summary>
-    /// сохраняет файл пути карты
+    /// Сохраняет маршрут в файл
     /// </summary>
-    /// <param name="name_map">имя карты</param>
-    /// <param name="way">файл пути</param>
+    /// <param name="name_map">Экземпляр карты, владельца маршрута</param>
+    /// <param name="way">Экземпляр маршруда для созхранения</param>
     /// <returns>tru сохранение прошло успешно false провалилось</returns>
     public void SaveWay(MAP map, WAY way)
     {
-        string pathWay = Path.Combine(path_local, path_map_cashe, map.name_map, way.name_WAY + ".json");//получение строки к файлу конфигу карты
+        string pathWay = Path.Combine(path_local, path_map_cashe, map.name_map, way.name_WAY + ".json");    //получение строки к файлу конфигу карты
+        string pathFolder = Path.Combine(path_local, path_map_cashe, map.name_map);                         //директори папки
 
-        string pathFolder = Path.Combine(path_local, path_map_cashe, map.name_map);//директори папки
-        if (Directory.Exists(pathFolder) /*проверка на существование директории*/) 
+        if (Directory.Exists(pathFolder)/*проверка на существование директории*/) 
         {
-            File.WriteAllText(pathWay, JsonUtility.ToJson(way));//сохранение файла карты
+            File.WriteAllText(pathWay, JsonUtility.ToJson(way));                                            //сохранение файла карты
         }
         else
         {
+            //В случае отсутствия карты, для начало сохраним ее
             SaveMap(map);
             SaveWay(map, way);
         }
     }
 
     /// <summary>
-    /// загрузка карты 
+    /// Загрузка карты из файла 
     /// </summary>
-    /// <param name="name_map">наименование карты</param>
-    /// <param name="map">пременная в которую вернётся загруженное значение при возвращении true</param>
-    /// <returns>true если загрузка прошла успешно false если загрузка провалилась</returns>
-    public bool TryLoadMap(string name_map, out MAP map) 
+    /// <param name="MapName">Имя требуемой карты</param>
+    /// <param name="Map">пременная в которую вернётся загруженное значение при возвращении true</param>
+    public bool TryLoadMap(string MapName, out MAP Map) 
     {
-        string pathMap = Path.Combine(path_local, path_map_cashe, name_map , _MapFileName);//получение строки к файлу конфигу карты
-
+        string pathMap = Path.Combine(path_local, path_map_cashe, MapName , _MapFileName);//получение строки к файлу конфигу карты
         pathMap = Path.GetFullPath(pathMap);
+
         if (CheakExistFile(pathMap))
         {
             SerializeMap smap;
             smap = JsonConvert.DeserializeObject<SerializeMap>(File.ReadAllText(pathMap));
-            map = smap.DeSerializeMap();
+            Map = smap.DeSerializeMap();
             return true;
         }
         else 
         {
-            map = new MAP();//костыль
+            Map = new MAP();
             return false;
         }
     }
 
     /// <summary>
-    /// загрузка пути карты
+    /// Pагрузка маршрута карты
     /// </summary>
-    /// <param name="name_map">имя карты</param>
-    /// <param name="name_way">имя пути</param>
-    /// <param name="way">возвразяемая переменная</param>
-    /// <returns>tru всё прошло успешно false произошла ошибка</returns>
-    public bool TryLoadWay(string name_map, string name_way, out WAY way)
+    /// <param name="NameMap">Имя карты владельца</param>
+    /// <param name="NameWay">Имя требуемого маршрута</param>
+    /// <param name="Way">возвразяемая переменная</param>
+    public bool TryLoadWay(string NameMap, string NameWay, out WAY Way)
     {
-        string pathMap = Path.Combine(path_local, path_map_cashe, name_map, name_way + ".json");//получение строки к файлу конфигу карты
+        string pathWay = Path.Combine(path_local, path_map_cashe, NameMap, NameWay + ".json");//получение строки к файлу конфигу карты
+        pathWay = Path.GetFullPath(pathWay);
 
-        pathMap = Path.GetFullPath(pathMap);
-        if (CheakExistFile(pathMap))
+        if (CheakExistFile(pathWay))
         {
-            way = JsonConvert.DeserializeObject<WAY>(File.ReadAllText(pathMap));
+            Way = JsonConvert.DeserializeObject<WAY>(File.ReadAllText(pathWay));
             return true;
         }
         else
         {
-            way = new WAY();//костыль
+            Way = new WAY();
             return false;
         }
     }
 
     /// <summary>
-    /// удаление карты 
+    /// Удаление карты 
     /// </summary>
-    /// <param name="name_map">имя карты</param>
-    /// <returns>true кдаление прошло успешно false удаление не произошло в связи с какой либо ошибкой</returns>
-    public bool TryRemoveMap(string name_map)
+    /// <param name="NameMap">Имя удаляемой карты</param>
+    public bool TryRemoveMap(string NameMap)
     {
-        string pathFolder = Path.Combine(path_local, path_map_cashe, name_map);//получение строки к файлу конфигу карты
-
+        string pathFolder = Path.Combine(path_local, path_map_cashe, NameMap);//получение строки к файлу конфигу карты
         pathFolder = Path.GetFullPath(pathFolder);
 
         if (Directory.Exists(pathFolder))
         {
-            pathsMap.Remove(name_map);
+            pathsMap.Remove(NameMap);
             Directory.Delete(pathFolder,true);
             return true;
         }
@@ -254,15 +275,13 @@ public class DataMagedger : MonoBehaviour
     }
 
     /// <summary>
-    /// удалякет путь карты
+    /// Удалякет маршрут
     /// </summary>
-    /// <param name="name_map">имя карты</param>
-    /// <param name="name_way">имя пути</param>
-    /// <returns>true кдаление прошло успешно false удаление не произошло в связи с какой либо ошибкой</returns>
-    public bool TryRemoveWay(string name_map, string name_way)
+    /// <param name="NameMap">Имя карты владельца</param>
+    /// <param name="NameWay">Имя маршрута</param>
+    public bool TryRemoveWay(string NameMap, string NameWay)
     {
-        string pathWay = Path.Combine(path_local, path_map_cashe, name_map, name_way + ".json");//получение строки к файлу конфигу карты
-
+        string pathWay = Path.Combine(path_local, path_map_cashe, NameMap, NameWay + ".json");//получение строки к файлу конфигу карты
         pathWay = Path.GetFullPath(pathWay);
 
         if (File.Exists(pathWay))
@@ -277,29 +296,40 @@ public class DataMagedger : MonoBehaviour
         }
     }
 
-    public bool ChangeName(MAP map, string new_name)
+    /// <summary>
+    /// Смена именя карты
+    /// </summary>
+    /// <param name="Map">Экземпляр карты</param>
+    /// <param name="NewName"> Новое имя</param>
+    /// <returns></returns>
+    public bool ChangeName(MAP Map, string NewName)
     {
-        string pathMap = Path.Combine(path_local, path_map_cashe, map.name_map);
-
+        string pathMap = Path.Combine(path_local, path_map_cashe, Map.name_map);
         pathMap = Path.GetFullPath(pathMap);
 
         if (Directory.Exists(pathMap))
         {
             DirectoryInfo dirInfo = new DirectoryInfo(pathMap);
 
-            dirInfo.MoveTo(Path.Combine(dirInfo.Parent.FullName, new_name));
+            dirInfo.MoveTo(Path.Combine(dirInfo.Parent.FullName, NewName));
         }
 
-        map.name_map = new_name;
+        Map.name_map = NewName;
 
-        SaveMap(map);
+        SaveMap(Map);
 
         return true;
     }
-
-    public bool ChangeName(MAP map, string new_name, WAY way)
+    /// <summary>
+    /// Смена именя маршрута
+    /// </summary>
+    /// <param name="Map">Экземпляр карты</param>
+    /// <param name="NenName"> Новое имя</param>
+    /// <param name="Way">Экземпляр пути</param>
+    /// <returns></returns>
+    public bool ChangeName(MAP Map, string NewMap, WAY Way)
     {
-        string pathWay = Path.Combine(path_local, path_map_cashe, map.name_map, way.name_WAY + ".json");
+        string pathWay = Path.Combine(path_local, path_map_cashe, Map.name_map, Way.name_WAY + ".json");
 
         pathWay = Path.GetFullPath(pathWay);
 
@@ -307,25 +337,22 @@ public class DataMagedger : MonoBehaviour
         {
             FileInfo fileInfo = new FileInfo(pathWay);
 
-            fileInfo.MoveTo(Path.Combine(Path.Combine(path_local, path_map_cashe, map.name_map), new_name + ".json"));
+            fileInfo.MoveTo(Path.Combine(Path.Combine(path_local, path_map_cashe, Map.name_map), NewMap + ".json"));
         }
 
-        map.names_WAY[map.names_WAY.FindIndex((string wayname) => { return wayname == way.name_WAY; })] = new_name;
+        Map.names_WAY[Map.names_WAY.FindIndex((string wayname) => { return wayname == Way.name_WAY; })] = NewMap;
 
-        way.name_WAY = new_name;
+        Way.name_WAY = NewMap;
 
-        SaveMap(map);
-        SaveWay(map, way);
+        SaveMap(Map);
+        SaveWay(Map, Way);
 
         return true;
     }
 
     /// <summary>
-    /// загрузка изображения из файла по директории
+    /// Сорздание карты через открытие изображения
     /// </summary>
-    /// <param name="filepath">директория с именем файла</param>
-    /// <param name="img">возвращяемое значение</param>
-    /// <returns>tru всё прошло удачно , false  пролизошла ошибка  </returns>
     public bool CreateMap(out MAP map) 
     {
         map = new MAP();
@@ -359,8 +386,10 @@ public class DataMagedger : MonoBehaviour
         }
     }
 
-    
-
+    /// <summary>
+    /// Получить список ярлыков
+    /// </summary>
+    /// <returns></returns>
     public List<Shotcat> GetShortName()
     {
         List<Shotcat> out_value = new List<Shotcat>();
@@ -381,10 +410,9 @@ public class DataMagedger : MonoBehaviour
     }
 
     /// <summary>
-    /// проверяет на то ,что по локальной директории  приложения имеются необходимые папки 
+    /// Инициализация файлого менеджера приложения
     /// или создаёт их
     /// </summary>
-    /// <returns>при создании директории возвращяет false ,а при переборе уже созданной  true</returns>
     public bool InitDataStore()
     {
         path_local = Application.persistentDataPath;//получение локального пути приложения 
@@ -393,8 +421,9 @@ public class DataMagedger : MonoBehaviour
         Debug.Log(path_local);
         if (!Directory.Exists(pathFolder))//проверка на существование папки с картами
         {
-           //если нет директории то создаём её
-           Directory.CreateDirectory(pathFolder);
+            //если нет директории то создаём её
+            Directory.CreateDirectory(pathFolder);
+
             MAP baseMap = new MAP();
             baseMap.name_map = "BaseMap";
             baseMap.image_Map = Sprite.Create(BaseImage, new Rect(0, 0, BaseImage.width, BaseImage.height), new Vector2(0.5f, 0.5f), 100.0f);
@@ -422,11 +451,8 @@ public class DataMagedger : MonoBehaviour
             return true;
         }
     }
-    #endregion
-    
-    #region construct_distruct-start_update
 
-    // Start is called before the first frame update
+
     void Awake()
     {
         InitDataStore();

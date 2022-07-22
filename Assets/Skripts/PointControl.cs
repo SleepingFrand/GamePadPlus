@@ -1,22 +1,41 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using System.Collections.Generic;
 
+/// <summary>
+/// Реализует контроли над маршрутными точками
+/// </summary>
 public class PointControl : MonoBehaviour
 {
+    #region Поля
     [SerializeField] private DataStore dataStore;
 
+    /// <summary>
+    /// Список точек маршрута
+    /// </summary>
     [SerializeField] private List<GameObject> Points;
+    /// <summary>
+    /// Префаб точки маршрута
+    /// </summary>
     [SerializeField] private GameObject PointPrefab;
+    /// <summary>
+    /// Карта для растановки точек
+    /// </summary>
     [SerializeField] private GameObject Map;
 
+    /// <summary>
+    /// Выбранная точка
+    /// </summary>
     [SerializeField] private GameObject CurrentPoint;
 
+    /// <summary>
+    /// Позиция клика на карту
+    /// </summary>
     [SerializeField] private Vector2 clickPosition = new Vector2(361, 361);
+    #endregion
 
+    #region Методы
     private void Start()
     {
         AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
@@ -32,7 +51,10 @@ public class PointControl : MonoBehaviour
         }
 
     }
-
+    /// <summary>
+    /// Расталяет точки маршрута на карте
+    /// </summary>
+    /// <param name="pointsPositions">Список позиций точек</param>
     void PlaseWayPoints(List<Vector2> pointsPositions)
     {
         foreach (Vector2 pointPos in pointsPositions)
@@ -42,7 +64,9 @@ public class PointControl : MonoBehaviour
         }
         DrawLineWay(pointsPositions);
     }
-
+    /// <summary>
+    /// Очищает точки маршрута с поля
+    /// </summary>
     void CleanPoints()
     {
         this.gameObject.GetComponent<LineRenderer>().positionCount = 0;
@@ -53,33 +77,23 @@ public class PointControl : MonoBehaviour
         }
         Points.Clear();
     }
+    #endregion
 
-
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    #region Публичные методы
+    /// <summary>
+    /// Метод обрабатывает нажатия на экран
+    /// </summary>
     public void GetTouch()
     {
-        Debug.Log("Click on " + Input.mousePosition);
-
-
         PointerEventData m_PointerEventData = new PointerEventData(FindObjectOfType<EventSystem>());
-        //Set the Pointer Event Position to that of the mouse position
         m_PointerEventData.position = Input.mousePosition;
 
-        //Create a list of Raycast Results
         List<RaycastResult> results = new List<RaycastResult>();
 
         GraphicRaycaster Graycast = FindObjectOfType<GraphicRaycaster>();
 
-        //Raycast using the Graphics Raycaster and mouse click position
         Graycast.Raycast(m_PointerEventData, results);
 
-        //For every result returned, output the name of the GameObject on the Canvas hit by the Ray
         foreach (RaycastResult result in results)
         {
             if(result.gameObject.tag == "Map")
@@ -96,7 +110,10 @@ public class PointControl : MonoBehaviour
             }
         }
     }
-
+    /// <summary>
+    /// Рисует линию маршрута
+    /// </summary>
+    /// <param name="pointsPositions">Список позиций для рисования</param>
     void DrawLineWay(List<Vector2> pointsPositions)
     {
         this.gameObject.GetComponent<LineRenderer>().ResetBounds();
@@ -110,12 +127,15 @@ public class PointControl : MonoBehaviour
         this.gameObject.GetComponent<LineRenderer>().positionCount = PosOnVect3.Count;
         this.gameObject.GetComponent<LineRenderer>().SetPositions(PosOnVect3.ToArray());
     }
-
+    /// <summary>
+    /// Метод создает точку маршрута
+    /// </summary>
     public void CreatePoint()
     {
         if (clickPosition != new Vector2(361, 361)) 
         { 
-            Points.Add((Instantiate(PointPrefab, clickPosition, Quaternion.identity).transform.parent = Map.transform).GetChild(Map.transform.childCount - 1).gameObject);
+            Points.Add((Instantiate(PointPrefab, new Vector2(clickPosition.x, clickPosition.y + PointPrefab.gameObject.GetComponent<RectTransform>().rect.height / 2),
+                Quaternion.identity).transform.parent = Map.transform).GetChild(Map.transform.childCount - 1).gameObject);
             dataStore.CurrentWay.positionWayPoints.Add(clickPosition);
         }
         DrawLineWay(dataStore.CurrentWay.positionWayPoints);
@@ -123,7 +143,9 @@ public class PointControl : MonoBehaviour
 
         AtionsSystem.UpdateValueOnSettings();
     }
-
+    /// <summary>
+    /// Метод удаляет точку маршрута
+    /// </summary>
     public void DeletePoint()
     {
         if (CurrentPoint != null)
@@ -140,6 +162,5 @@ public class PointControl : MonoBehaviour
             AtionsSystem.UpdateValueOnSettings();
         }
     }
-
-
+    #endregion
 }

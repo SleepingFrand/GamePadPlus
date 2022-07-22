@@ -1,25 +1,37 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Реализует контроль над панелью настроек
+/// </summary>
 public class SettingsController : MonoBehaviour
 {
-    [SerializeField] private Vector2 top_left = new Vector2();
-    [SerializeField] private Vector2 bottom_right = new Vector2();
-                     
+    #region Поля
+    /// <summary>
+    /// Объект для вывода текста имени карты
+    /// </summary>
     [SerializeField] private GameObject MapNameText;
-                   
+    /// <summary>
+    /// Объект для вывода текста имени маршрута
+    /// </summary>
     [SerializeField] private GameObject WayNameText;
+    /// <summary>
+    /// Объект для вывода кол-ва точек в маршруте
+    /// </summary>
     [SerializeField] private GameObject WayPointCountText;
 
+    // Объекты хранящие Rect географических координат карты
     [SerializeField] private GameObject Left_Edit;
     [SerializeField] private GameObject Top_Edit;
     [SerializeField] private GameObject Right_Edit;
     [SerializeField] private GameObject Bottom_Edit;
+    #endregion
 
-    DataStore dataStore;
+    #region Приватные поля
+    private DataStore dataStore;
+    #endregion
 
+    #region Методы
     private void Start()
     {
         AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
@@ -33,18 +45,31 @@ public class SettingsController : MonoBehaviour
         SetWayInfo(dataStore.CurrentWay.name_WAY, dataStore.CurrentWay.positionWayPoints.Count);
     }
 
+    /// <summary>
+    /// Устанавливает информацию о маршруте
+    /// </summary>
+    /// <param name="name">Имя маршрута</param>
+    /// <param name="count">Кол-во точек</param>
     public void SetWayInfo(string name, int count)
     {
         WayNameText.GetComponent<Text>().text = name;
         WayPointCountText.GetComponent<Text>().text = count.ToString();
     }
-
+    /// <summary>
+    /// Устанавливаете информацию о карте
+    /// </summary>
+    /// <param name="name">Имя карты</param>
+    /// <param name="graf_point">Rect географических точек</param>
     public void SetMapInfo(string name, Rect graf_point)
     {
         SetGrafValue(graf_point);
         MapNameText.GetComponent<Text>().text = name;
     }
 
+    /// <summary>
+    /// Получить географические координаты с UI
+    /// </summary>
+    /// <returns></returns>
     public Rect GetGrafValue()
     {
         Rect rect = new Rect();
@@ -55,6 +80,9 @@ public class SettingsController : MonoBehaviour
         return rect;
     }
 
+    /// <summary>
+    /// Установить географические координаты в UI
+    /// </summary>
     void SetGrafValue(float left, float top, float right, float bottom)
     {
         Left_Edit.GetComponent<InputField>().text       = left.ToString();
@@ -62,7 +90,9 @@ public class SettingsController : MonoBehaviour
         Right_Edit.GetComponent<InputField>().text      = right.ToString();
         Bottom_Edit.GetComponent<InputField>().text     = bottom.ToString();
     }
-
+    /// <summary>
+    /// Установить географические координаты в UI
+    /// </summary>
     void SetGrafValue(Rect rect)
     {
         Left_Edit.GetComponent<InputField>().text       = rect.left.ToString();
@@ -70,44 +100,65 @@ public class SettingsController : MonoBehaviour
         Right_Edit.GetComponent<InputField>().text      = rect.right.ToString();
         Bottom_Edit.GetComponent<InputField>().text     = rect.bottom.ToString();
     }
+    #endregion
 
+    #region Публичные методы
+    /// <summary>
+    /// Загрузить новую картинку и создать по ней новую карту
+    /// </summary>
     public void LoadNewMap()
     {
         dataStore.CreateMap();
     }
-
+    /// <summary>
+    /// Сохранить текущую карту
+    /// </summary>
     public void SaveMap()
     {
         dataStore.CurrentMap.RectMap = GetGrafValue();
         dataStore.SaveMap();
     }
-
+    /// <summary>
+    /// Сохранить текущий маршрут
+    /// </summary>
     public void SaveWay()
     {
         dataStore.SaveWay();
     }
-
-    public void ChangeNameMap(string value) 
+    /// <summary>
+    /// Ихменить имя карты
+    /// </summary>
+    public void ChangeNameMap(string Name) 
     {
-        dataStore.ChangeNameMap(value);
+        dataStore.ChangeNameMap(Name);
     }
-    public void ChangeNameWay(string value)
+    /// <summary>
+    /// Изменить имя маршрута
+    /// </summary>
+    public void ChangeNameWay(string Name)
     {
-        dataStore.ChangeNameWay(value);
+        dataStore.ChangeNameWay(Name);
     }
-
+    /// <summary>
+    /// Создать маршрут
+    /// </summary>
     public void CreateWay()
     {
         dataStore.CreateWay();
     }
-
+    /// <summary>
+    /// Удалить текущую карту
+    /// </summary>
     public void DeleteMap()
     {
         dataStore.DeleteCurrentMap();
     }
-
+    /// <summary>
+    /// Удалить текущий маршрут
+    /// </summary>
     public void DeleteWay()
     {
         dataStore.DeleteCurrentWay();
     }
+    #endregion
 }

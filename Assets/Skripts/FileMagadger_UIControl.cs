@@ -1,28 +1,57 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor.Events;
 
+/// <summary>
+/// Класс контролирующий работу загрузки карт через UI
+/// </summary>
 public class FileMagadger_UIControl : MonoBehaviour
 {
+    #region Поля
+    /// <summary>
+    /// Хранит номер выбранной вкладки
+    /// </summary>
     [SerializeField] private int StateManedger = 0;
+    /// <summary>
+    /// Панель для генерации ярлыков
+    /// </summary>
     [SerializeField] private GameObject ShotcatZone;
+    /// <summary>
+    /// Главная панель менеджера
+    /// </summary>
     [SerializeField] private GameObject PanelMain;
+    /// <summary>
+    /// Состояние главной панели
+    /// </summary>
     [SerializeField] private bool MainState = false;
 
+    /// <summary>
+    /// Префаб ярлыка
+    /// </summary>
     [SerializeField] private GameObject ShotCatPrefab;
 
+    /// <summary>
+    /// Ярлык текущей выбранной карты
+    /// </summary>
     [SerializeField] private GameObject CurrentMapShotcat;
 
+    /// <summary>
+    /// Коррактеровка позиции ярлыка
+    /// </summary>
     [SerializeField] private Vector2 AdjustPosition;
+    #endregion
 
-    Dictionary<GameObject,  List<GameObject>> Shotcats = new Dictionary<GameObject, List<GameObject>>();
-    DataStore dataStore;
+    #region Приватные поля
+    /// <summary>
+    /// Библиотека ярлыков (Карта) : (Список Маршрутов)
+    /// </summary>
+    private Dictionary<GameObject,  List<GameObject>> Shotcats = new Dictionary<GameObject, List<GameObject>>();
 
+    private DataStore dataStore;
     private RectTransform RectTransform;
+    #endregion
 
-    // Start is called before the first frame update
+    #region Методы
     void Start()
     {
         this.gameObject.GetComponent<Button>().onClick.AddListener(SetStete_Main);
@@ -31,11 +60,23 @@ public class FileMagadger_UIControl : MonoBehaviour
         AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
     }
 
+    /// <summary>
+    /// Получить количество объектов, которые поместяться по высоте
+    /// </summary>
+    /// <param name="obj">Размеры объекта</param>
+    /// <param name="zone">Размеры зоны</param>
+    /// <returns></returns>
     int GetCountHieght(Rect obj, Rect zone)
     {
         return Mathf.CeilToInt(zone.height / (obj.height + Mathf.Abs(obj.y)));
     }
-
+    /// <summary>
+    /// Создает ярлык в соответствие с его номером на поле
+    /// </summary>
+    /// <param name="count">Номер в списке</param>
+    /// <param name="text">Надпись на ярлыке</param>
+    /// <param name="IsMap">Параметр фильтрующий карты</param>
+    /// <returns>Объект карты</returns>
     GameObject CreateShotcat(int count, string text, bool IsMap)
     {
         Rect rect = ShotCatPrefab.GetComponent<RectTransform>().rect;
@@ -69,7 +110,9 @@ public class FileMagadger_UIControl : MonoBehaviour
             lable.GetComponent<Button>().onClick.AddListener(() => dataStore.ChengeWay(text));
         return lable;
     }
-
+    /// <summary>
+    /// Удаляет ярлыки и очищает из список
+    /// </summary>
     void ClearShotcats()
     {
         foreach (GameObject map in Shotcats.Keys)
@@ -82,6 +125,9 @@ public class FileMagadger_UIControl : MonoBehaviour
         }
         Shotcats.Clear();
     }
+    /// <summary>
+    /// Загружает ярлыки с главного хранилища
+    /// </summary>
     void LoadMapShotcat()
     {
         ClearShotcats();
@@ -100,7 +146,9 @@ public class FileMagadger_UIControl : MonoBehaviour
             Shotcats.Add(CreateShotcat(count_map++, item.MapName, true), ways);
         }
     }
-
+    /// <summary>
+    /// Обновляет данные, получаемые из главного хранилища
+    /// </summary>
     void UpdateValue_For_DataStore()
     {
         LoadMapShotcat();
@@ -118,15 +166,11 @@ public class FileMagadger_UIControl : MonoBehaviour
 
         SetZonetate(1);
     }
-
-
-
-// Update is called once per frame
-    void Update()
-    {
-
-    }
-
+    /// <summary>
+    /// Устанавливает значение активности списка объектов
+    /// </summary>
+    /// <param name="objects">Список объектов</param>
+    /// <param name="state">Требуемый статус</param>
     void SetActuve(List<GameObject> objects, bool state)
     {
         foreach(GameObject item in objects)
@@ -134,14 +178,23 @@ public class FileMagadger_UIControl : MonoBehaviour
             item.SetActive(state);
         }
     }
+    #endregion
 
+    #region Публичные методы
+    /// <summary>
+    /// Отобразить список путей, для полученной карты
+    /// </summary>
+    /// <param name="obj">Объект ярлыка карты</param>
     public void SetWayState(GameObject obj)
     {
         SetActuve(Shotcats[CurrentMapShotcat], false);
         CurrentMapShotcat = obj;
         SetActuve(Shotcats[CurrentMapShotcat], true);
     }
-
+    /// <summary>
+    /// Смена вкладки менеджера
+    /// </summary>
+    /// <param name="state">Вкладка которую нужно отобразить</param>
     public void SetZonetate(int state)
     {
         switch (state)
@@ -156,7 +209,9 @@ public class FileMagadger_UIControl : MonoBehaviour
                 break;
         }
     }
-
+    /// <summary>
+    /// Отобразает\прячет менеджер
+    /// </summary>
     public void SetStete_Main()
     {
         MainState = !MainState;
@@ -164,4 +219,5 @@ public class FileMagadger_UIControl : MonoBehaviour
 
         RectTransform.anchoredPosition -= new Vector2(0, PanelMain.GetComponent<RectTransform>().rect.yMax * (MainState?2:-2));
     }
+    #endregion
 }

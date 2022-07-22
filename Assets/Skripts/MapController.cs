@@ -1,14 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// –еализует контроль над картой
+/// </summary>
 public class MapController : MonoBehaviour
 {
+    /// <summary>
+    /// Ёкземпл€р главного хранилища
+    /// </summary>
     [SerializeField] private DataStore dataStore;
-    public bool UpdateNow = false;
 
-    private void Start()
+    private void Awake()
     {
         AtionsSystem.UpdateValueForDataStore += UpdateValue_For_DataStore;
         dataStore = FindObjectOfType<DataStore>();
@@ -19,16 +22,9 @@ public class MapController : MonoBehaviour
         SetImage();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        if (UpdateNow)
-        {
-            SetImage();
-            UpdateNow = false;
-        }
-    }
-
+    /// <summary>
+    /// ”станавливает картинку карты из главного хранилища
+    /// </summary>
     void SetImage()
     {
         this.GetComponent<Image>().sprite = dataStore.CurrentMap.image_Map;
