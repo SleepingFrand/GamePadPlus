@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 /// <summary>
 /// Реализует управление персонажем
@@ -28,6 +29,7 @@ public class CharacterController : MonoBehaviour
     private void Start()
     {
         dataStore = FindObjectOfType<DataStore>();
+        AtionsSystem.UpdateValueOnCharacter += SetPosition;
     }
 
     /// <summary>
@@ -35,10 +37,10 @@ public class CharacterController : MonoBehaviour
     /// </summary>
     /// <param name="position">Географическая координата</param>
     /// <param name="direction">Напраление пути</param>
-    public void SetPosition(Vector2 position, float direction)
+    public void SetPosition()
     {
-        GeoPos = position;
-        Direction = direction;
+        GeoPos = DataStore.CharacterPosition;
+        Direction = DataStore.CharacterDirection;
         transform.Translate(SetGeotransformToScreen());
     }
 

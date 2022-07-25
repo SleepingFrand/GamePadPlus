@@ -21,6 +21,9 @@ public class DataStore : MonoBehaviour
     /// Список класса данных для создания ярлыков на файлы
     /// </summary>
     public List<Shotcat> shotcats;
+
+    public static Vector2 CharacterPosition = new Vector2();
+    public static float CharacterDirection = 0;
     #endregion
 
     #region Приватные поля
@@ -36,6 +39,8 @@ public class DataStore : MonoBehaviour
     //Отправляем "бродкаст" на подгрузку данных из Хранилища
     private void Start()
     {
+        NetSkript.Init();
+
         _dataManedger = this.gameObject.GetComponent<DataMagedger>();
 
         if (!_dataManedger.TryLoadMap(_dataManedger.pathsMap[0], out CurrentMap))
@@ -213,5 +218,59 @@ public class DataStore : MonoBehaviour
         AtionsSystem.UpdateValueForDataStore.Invoke();
         AtionsSystem.UpdateValueOnSettings();
     }
+    #endregion
+
+    #region Методы для сети
+    private bool HandControl = false;
+    public void SendAutoWay(bool state)
+    {
+        SendMessage msg = new SendMessage();
+        msg.CreateStateWayAutoSend(state);
+
+        if (state)
+            HandControl = false;
+
+        NetSkript.SendMessageFromSocket(msg);
+    }
+    public void SendHandoWay(bool state)
+    {
+        SendMessage msg = new SendMessage();
+        msg.CreateStateWayHandSend(state);
+        HandControl = state;
+
+        NetSkript.SendMessageFromSocket(msg);
+    }
+
+    private void SendWay()
+    {
+        SendMessage msg = new SendMessage();
+        msg.CreateWaySend(CurrentWay);
+
+        NetSkript.SendMessageFromSocket(msg);
+    }
+
+    public void SendJoystick(Vector2 value)
+    {
+        if (HandControl && (value.x != float.PositiveInfinity && value.y != float.NegativeInfinity) && (value.y != float.PositiveInfinity && value.x != float.NegativeInfinity))
+        {
+            SendMessage msg = new SendMessage();
+            msg.CreateJoystickSend(value);
+
+            NetSkript.SendMessageFromSocket(msg);
+        } 
+    }
+
+    public static void SetCharaterTransform(ReceiveMessage msg)
+    {
+        CharacterPosition = (Vector2)msg.values[0];
+        CharacterDirection = (float)msg.values[1];
+        AtionsSystem.UpdateValueOnCharacter();
+    }
+
+    private void Update()
+    {
+        NetSkript.ReceiveMessageFromSocket();
+    }
+
     #endregion
 }

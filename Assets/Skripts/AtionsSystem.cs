@@ -15,4 +15,9 @@ public class AtionsSystem : MonoBehaviour
     /// Группа методов. вызываемых для обновления данных в панеле настроек
     /// </summary>
     public static UnityAction UpdateValueOnSettings;
+
+    /// <summary>
+    /// Группа методов. вызываемых для обновления персонажа
+    /// </summary>
+    public static UnityAction UpdateValueOnCharacter;
 }
