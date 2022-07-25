@@ -10,7 +10,7 @@ public class CharacterController : MonoBehaviour
     /// <summary>
     /// Карта (Игровой объект)
     /// </summary>
-    [SerializeField] private GameObject Map;
+    [SerializeField] private RectTransform Map;
     /// <summary>
     /// Нарвавление пути
     /// </summary>
@@ -30,6 +30,7 @@ public class CharacterController : MonoBehaviour
     {
         dataStore = FindObjectOfType<DataStore>();
         AtionsSystem.UpdateValueOnCharacter += SetPosition;
+        Map = FindObjectOfType<MapController>().gameObject.GetComponent<RectTransform>();
     }
 
     /// <summary>
@@ -41,7 +42,8 @@ public class CharacterController : MonoBehaviour
     {
         GeoPos = DataStore.CharacterPosition;
         Direction = DataStore.CharacterDirection;
-        transform.Translate(SetGeotransformToScreen());
+        Vector2 newpos = SetGeotransformToScreen();
+        transform.Translate(newpos);
     }
 
     /// <summary>
@@ -51,42 +53,28 @@ public class CharacterController : MonoBehaviour
     {
         Rect map_rect = dataStore.CurrentMap.RectMap;
 
-        Vector2 Size = new Vector2();
-
-        Vector2 RePosition = GeoPos;
+        Rect Geo_RectMap = dataStore.CurrentMap.RectMap;
 
         Vector2 outVect = new Vector2();
 
-        Size.x = 0;
-        Size.y = 0;
-
-        if (map_rect.left < map_rect.right)
+        if (Geo_RectMap.x > Geo_RectMap.width)
         {
-            Size.x = map_rect.right - map_rect.left;
-            RePosition.x -= map_rect.left;
+            float temp = Geo_RectMap.x;
+            Geo_RectMap.x = Geo_RectMap.width;
+            Geo_RectMap.width = temp;
         }
-        else
+        if (Geo_RectMap.y > Geo_RectMap.height)
         {
-            Size.x = map_rect.left - map_rect.right;
-            RePosition.x -= map_rect.right;
-        }
-
-        if (map_rect.top < map_rect.bottom)
-        {
-            Size.y = map_rect.bottom - map_rect.top;
-            RePosition.y -= map_rect.top;
-        }
-        else
-        {
-            Size.y = map_rect.top - map_rect.bottom;
-            RePosition.y -= map_rect.bottom;
+            float temp = Geo_RectMap.y;
+            Geo_RectMap.y = Geo_RectMap.height;
+            Geo_RectMap.height = temp;
         }
 
-        double correct = RePosition.x / Size.x;
-        outVect.x = (float)(Map.GetComponent<RectTransform>().rect.width / correct) + Map.GetComponent<RectTransform>().rect.x;
+        double correct = (GeoPos.x - Geo_RectMap.x) / (Geo_RectMap.width - Geo_RectMap.x);
+        outVect.x = (float)(Map.rect.width / correct) + Map.rect.x;
 
-        correct = RePosition.y / Size.y;
-        outVect.y = (float)(Map.GetComponent<RectTransform>().rect.height / correct) + Map.GetComponent<RectTransform>().rect.y;
+        correct = (GeoPos.y - Geo_RectMap.y) / (Geo_RectMap.height - Geo_RectMap.y);
+        outVect.y = (float)(Map.rect.height / correct) + Map.rect.y;
 
         return outVect;
     }

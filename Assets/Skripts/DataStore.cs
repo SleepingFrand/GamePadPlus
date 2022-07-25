@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading.Tasks;
+using System;
 
 /// <summary>
 ///  ласс выполн€ющий роль главного хранилища
@@ -251,19 +253,22 @@ public class DataStore : MonoBehaviour
 
     public void SendJoystick(Vector2 value)
     {
-        if (HandControl && (value.x != float.PositiveInfinity && value.y != float.NegativeInfinity) && (value.y != float.PositiveInfinity && value.x != float.NegativeInfinity))
-        {
-            SendMessage msg = new SendMessage();
-            msg.CreateJoystickSend(value);
+        Task.Run(() => {
+            if (HandControl && (value.x != float.PositiveInfinity && value.y != float.NegativeInfinity) && (value.y != float.PositiveInfinity && value.x != float.NegativeInfinity))
+            {
+                SendMessage msg = new SendMessage();
+                msg.CreateJoystickSend(value);
 
-            NetSkript.SendMessageFromSocket(msg);
-        } 
+                NetSkript.SendMessageFromSocket(msg);
+            }
+        });
+        
     }
 
     public static void SetCharaterTransform(ReceiveMessage msg)
     {
-        CharacterPosition = (Vector2)msg.values[0];
-        CharacterDirection = (float)msg.values[1];
+        CharacterPosition = new Vector2(Convert.ToSingle(msg.values[0]), Convert.ToSingle(msg.values[1]));
+        CharacterDirection = Convert.ToSingle(msg.values[2]);
         AtionsSystem.UpdateValueOnCharacter();
     }
 
