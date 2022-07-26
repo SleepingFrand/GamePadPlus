@@ -139,7 +139,10 @@ public class NetSkript : MonoBehaviour
                 int bytesRec = handler.Receive(bytes);
 
                 msg.SetValueFromJSON(bytes);
-                DataStore.SetCharaterTransform(msg);
+                if (msg.name == "CharacterPosition")
+                    DataStore.SetCharaterTransform(msg);
+                else if (msg.name == "EndWay")
+                    DataStore.EndWaySend();
 
                 handler.Shutdown(SocketShutdown.Both);
                 handler.Close();

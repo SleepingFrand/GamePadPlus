@@ -285,5 +285,10 @@ public class DataStore : MonoBehaviour
         }
     }
 
+    public static void EndWaySend()
+    {
+        GameObject.FindGameObjectWithTag("EndWayCB").GetComponent<CheakBox_UI>().OffBoxWithoutEvent();
+    }
+
     #endregion
 }

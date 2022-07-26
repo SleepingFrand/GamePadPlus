@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Map
   - WayPoint
+  - EndWayCB
   layers:
   - Default
   - TransparentFX

@@ -36,4 +36,10 @@ public class CheakBox_UI : MonoBehaviour
             EventOFF.Invoke();
         }
     }
+
+    public void OffBoxWithoutEvent()
+    {
+        State = !State;
+        this.gameObject.GetComponent<Image>().sprite = ImageOFF;
+    }
 }
