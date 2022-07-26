@@ -124,6 +124,7 @@ public class NetSkript : MonoBehaviour
     {
         if (dataReading)
         {
+
             dataReading = false;
             Task.Run(() =>
             {
@@ -133,10 +134,10 @@ public class NetSkript : MonoBehaviour
 
                 // Мы дождались клиента, пытающегося с нами соединиться
 
+                ReceiveMessage msg = new ReceiveMessage();
                 byte[] bytes = new byte[1024];
                 int bytesRec = handler.Receive(bytes);
 
-                ReceiveMessage msg = new ReceiveMessage();
                 msg.SetValueFromJSON(bytes);
                 DataStore.SetCharaterTransform(msg);
 

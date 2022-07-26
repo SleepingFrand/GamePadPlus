@@ -22,7 +22,7 @@ public class PointControl : MonoBehaviour
     /// <summary>
     /// Карта для растановки точек
     /// </summary>
-    [SerializeField] private GameObject Map;
+    [SerializeField] public GameObject Map;
 
     /// <summary>
     /// Выбранная точка

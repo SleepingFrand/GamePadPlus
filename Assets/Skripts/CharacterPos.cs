@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEditor;
 
 /// <summary>
 /// Реализует управление персонажем
 /// </summary>
-public class CharacterController : MonoBehaviour
+public class CharacterPos : MonoBehaviour
 {
     #region Поля
     /// <summary>
@@ -15,6 +16,7 @@ public class CharacterController : MonoBehaviour
     /// Нарвавление пути
     /// </summary>
     [SerializeField] private float Direction;
+    private float BaseDirection;
     /// <summary>
     /// Текущаа позиция в географических координатах
     /// </summary>
@@ -30,7 +32,7 @@ public class CharacterController : MonoBehaviour
     {
         dataStore = FindObjectOfType<DataStore>();
         AtionsSystem.UpdateValueOnCharacter += SetPosition;
-        Map = FindObjectOfType<MapController>().gameObject.GetComponent<RectTransform>();
+        BaseDirection = this.GetComponent<RectTransform>().localEulerAngles.z;
     }
 
     /// <summary>
@@ -43,7 +45,9 @@ public class CharacterController : MonoBehaviour
         GeoPos = DataStore.CharacterPosition;
         Direction = DataStore.CharacterDirection;
         Vector2 newpos = SetGeotransformToScreen();
-        transform.Translate(newpos);
+        GetComponent<RectTransform>().localPosition = newpos;
+        this.GetComponent<RectTransform>().localEulerAngles = new Vector3(0, 0, BaseDirection + Direction);
+
     }
 
     /// <summary>
@@ -51,6 +55,7 @@ public class CharacterController : MonoBehaviour
     /// </summary>
     Vector2 SetGeotransformToScreen()
     {
+
         Rect map_rect = dataStore.CurrentMap.RectMap;
 
         Rect Geo_RectMap = dataStore.CurrentMap.RectMap;
@@ -70,11 +75,12 @@ public class CharacterController : MonoBehaviour
             Geo_RectMap.height = temp;
         }
 
+
         double correct = (GeoPos.x - Geo_RectMap.x) / (Geo_RectMap.width - Geo_RectMap.x);
-        outVect.x = (float)(Map.rect.width / correct) + Map.rect.x;
+        outVect.x = (float)(Map.rect.width * correct) + Map.localPosition.x;
 
         correct = (GeoPos.y - Geo_RectMap.y) / (Geo_RectMap.height - Geo_RectMap.y);
-        outVect.y = (float)(Map.rect.height / correct) + Map.rect.y;
+        outVect.y = (float)(Map.rect.height * correct) + Map.localPosition.y;
 
         return outVect;
     }

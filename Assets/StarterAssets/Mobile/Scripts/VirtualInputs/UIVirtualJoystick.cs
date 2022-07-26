@@ -56,6 +56,7 @@ public class UIVirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandle
             UpdateHandleRectPosition(clampedPosition * joystickRange);
         }
         
+        
     }
 
     public void OnPointerUp(PointerEventData eventData)

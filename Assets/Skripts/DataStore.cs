@@ -54,6 +54,7 @@ public class DataStore : MonoBehaviour
         {
             Debug.Log("Error on load current way by id 0");
         }
+        SendWay();
 
         shotcats = _dataManedger.GetShortName();
 
@@ -77,6 +78,7 @@ public class DataStore : MonoBehaviour
         {
             Debug.Log("Error on load current way for name" + name);
         }
+        SendWay();
 
         AtionsSystem.UpdateValueForDataStore.Invoke();
     }
@@ -154,7 +156,7 @@ public class DataStore : MonoBehaviour
         {
             Debug.Log("Error on load current way by id 0");
         }
-
+        SendWay();
         AtionsSystem.UpdateValueForDataStore.Invoke();
     }
 
@@ -265,16 +267,22 @@ public class DataStore : MonoBehaviour
         
     }
 
+    static ReceiveMessage PosMessage = null;
     public static void SetCharaterTransform(ReceiveMessage msg)
     {
-        CharacterPosition = new Vector2(Convert.ToSingle(msg.values[0]), Convert.ToSingle(msg.values[1]));
-        CharacterDirection = Convert.ToSingle(msg.values[2]);
-        AtionsSystem.UpdateValueOnCharacter();
+        PosMessage = msg;
     }
 
     private void Update()
     {
         NetSkript.ReceiveMessageFromSocket();
+        if (PosMessage != null)
+        {
+            CharacterPosition = new Vector2(Convert.ToSingle(PosMessage.values[0]), Convert.ToSingle(PosMessage.values[1]));
+            CharacterDirection = Convert.ToSingle(PosMessage.values[2]);
+            AtionsSystem.UpdateValueOnCharacter();
+            PosMessage = null;
+        }
     }
 
     #endregion

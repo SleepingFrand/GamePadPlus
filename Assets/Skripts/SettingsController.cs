@@ -95,10 +95,10 @@ public class SettingsController : MonoBehaviour
     /// </summary>
     void SetGrafValue(Rect rect)
     {
-        Left_Edit.GetComponent<InputField>().text       = rect.left.ToString();
-        Top_Edit.GetComponent<InputField>().text        = rect.top.ToString();
-        Right_Edit.GetComponent<InputField>().text      = rect.right.ToString();
-        Bottom_Edit.GetComponent<InputField>().text     = rect.bottom.ToString();
+        Left_Edit.GetComponent<InputField>().text       = rect.x.ToString();
+        Top_Edit.GetComponent<InputField>().text        = rect.y.ToString();
+        Right_Edit.GetComponent<InputField>().text      = rect.width.ToString();
+        Bottom_Edit.GetComponent<InputField>().text     = rect.height.ToString();
     }
     #endregion
 
