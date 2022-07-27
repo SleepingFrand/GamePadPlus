@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using Newtonsoft.Json;
-using UnityEditor;
 
 #region Классы
 /// <summary>
@@ -358,8 +357,16 @@ public class DataMagedger : MonoBehaviour
         map = new MAP();
         Texture2D texture = null;
         byte[] fileData;
-        string filepath = EditorUtility.OpenFilePanelWithFilters("Image map", "" , new string[] { "Image files", "png,jpg,jpeg", "All files", "*" });
-
+        string filepath = "";
+        bool wait = true;
+        NativeGallery.GetImageFromGallery((file) => {
+            if (file != null)
+            {
+                filepath = file;
+            }
+            wait = false;
+        }, "", "image/*");
+        while (wait) ;
         if (File.Exists(filepath))
         { 
             fileData = File.ReadAllBytes(filepath);

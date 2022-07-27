@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEditor;
+
 
 /// <summary>
 /// Реализует управление персонажем
