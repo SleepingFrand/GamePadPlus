@@ -15,7 +15,7 @@ public class CharacterPos : MonoBehaviour
     /// <summary>
     /// Нарвавление пути
     /// </summary>
-    [SerializeField] private float Direction;
+    [SerializeField] private Quaternion Direction;
     private float BaseDirection;
     /// <summary>
     /// Текущаа позиция в географических координатах
@@ -42,11 +42,11 @@ public class CharacterPos : MonoBehaviour
     /// <param name="direction">Напраление пути</param>
     public void SetPosition()
     {
-        GeoPos = DataStore.CharacterPosition;
-        Direction = DataStore.CharacterDirection;
+        GeoPos = dataStore.CharacterPosition;
+        Direction = dataStore.CharacterDirection;
         Vector2 newpos = SetGeotransformToScreen();
         GetComponent<RectTransform>().localPosition = newpos;
-        this.GetComponent<RectTransform>().localEulerAngles = new Vector3(0, 0, BaseDirection + Direction);
+        this.GetComponent<RectTransform>().localEulerAngles = Direction.eulerAngles;
 
     }
 

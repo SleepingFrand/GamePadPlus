@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using System;
 
 /// <summary>
 /// Реализует функционал ChekBox
@@ -16,10 +17,13 @@ public class CheakBox_UI : MonoBehaviour
     [SerializeField] private UnityEvent EventON;
     [SerializeField] private UnityEvent EventOFF;
 
+    private DataStore dataStore;
+
     // Start is called before the first frame update
     void Start()
     {
         this.gameObject.GetComponent<Button>().onClick.AddListener(StateRevers);
+        dataStore = FindObjectOfType<DataStore>();
     }
 
     public void StateRevers()
@@ -35,11 +39,21 @@ public class CheakBox_UI : MonoBehaviour
             this.gameObject.GetComponent<Image>().sprite = ImageOFF;
             EventOFF.Invoke();
         }
+        if(this.tag == "EndWayCB")
+        {
+            dataStore.ButtonsStatus[1] = Convert.ToInt32(State);
+            dataStore.SendValueStick();
+        }
+        else
+        {
+            dataStore.ButtonsStatus[0] = Convert.ToInt32(State);
+            dataStore.SendValueStick();
+        }
     }
 
     public void OffBoxWithoutEvent()
     {
-        State = !State;
+        State = false;
         this.gameObject.GetComponent<Image>().sprite = ImageOFF;
     }
 }

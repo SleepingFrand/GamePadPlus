@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 /// <summary>
 /// Реализует контроль над панелью настроек
@@ -43,6 +44,7 @@ public class SettingsController : MonoBehaviour
     {
         SetMapInfo(dataStore.CurrentMap.name_map, dataStore.CurrentMap.RectMap);
         SetWayInfo(dataStore.CurrentWay.name_WAY, dataStore.CurrentWay.positionWayPoints.Count);
+        LoadServerImputText();
     }
 
     /// <summary>
@@ -159,6 +161,47 @@ public class SettingsController : MonoBehaviour
     public void DeleteWay()
     {
         dataStore.DeleteCurrentWay();
+    }
+    #endregion
+
+    #region Настройка адреса сервера
+    private string TempIp = "";
+    private int TempPort = 0;
+    [SerializeField] private GameObject SettingsServerPanel;
+    [SerializeField] private Text InputTextIp;
+    [SerializeField] private Text InputTextPort;
+
+    public void SwapAtcivePanelSettingsServer()
+    {
+        SettingsServerPanel.SetActive(!SettingsServerPanel.active);
+    }
+
+    private void LoadServerImputText()
+    {
+        TempIp = InputTextIp.text = dataStore.GetIPServer();
+        
+        InputTextPort.text = (TempPort = dataStore.GetPortServer()).ToString();
+    }
+
+    public void SetTempIP(string text)
+    {
+        TempIp = text;
+    }
+    public void SetTempPort(string text)
+    {
+        TempPort = Convert.ToInt32(text);
+    }
+
+    public void AseptServerSettings()
+    {
+        dataStore.SetAdressServer(TempIp,TempPort);
+        SwapAtcivePanelSettingsServer();
+    }
+
+    public void CanselServerSettings()
+    {
+        LoadServerImputText();
+        SwapAtcivePanelSettingsServer();
     }
     #endregion
 }

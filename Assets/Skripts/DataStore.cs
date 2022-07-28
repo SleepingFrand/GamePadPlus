@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Threading.Tasks;
-using System;
+using UnityEngine.UI;
 
 /// <summary>
 ///  ласс выполн€ющий роль главного хранилища
@@ -24,8 +23,14 @@ public class DataStore : MonoBehaviour
     /// </summary>
     public List<Shotcat> shotcats;
 
-    public static Vector2 CharacterPosition = new Vector2();
-    public static float CharacterDirection = 0;
+    public Vector2 CharacterPosition = new Vector2();
+    public Quaternion CharacterDirection = new Quaternion();
+
+    public Vector2 JoyStickValue = new Vector2();
+
+    public List<int> ButtonsStatus = new List<int>() { 0, 1 };
+
+    [SerializeField] private GameObject ErrorText;
     #endregion
 
     #region ѕриватные пол€
@@ -33,6 +38,8 @@ public class DataStore : MonoBehaviour
     /// Ёкземпл€р объекта манимулирующим файлами
     /// </summary>
     private DataMagedger _dataManedger;
+
+    private NetSkript _netSkript;
     #endregion
 
     #region Ѕазовые методы
@@ -41,9 +48,8 @@ public class DataStore : MonoBehaviour
     //ќтправл€ем "бродкаст" на подгрузку данных из ’ранилища
     private void Start()
     {
-        NetSkript.Init();
-
         _dataManedger = this.gameObject.GetComponent<DataMagedger>();
+        _netSkript = this.gameObject.GetComponent<NetSkript>();
 
         if (!_dataManedger.TryLoadMap(_dataManedger.pathsMap[0], out CurrentMap))
         {
@@ -54,12 +60,25 @@ public class DataStore : MonoBehaviour
         {
             Debug.Log("Error on load current way by id 0");
         }
-        SendWay();
 
         shotcats = _dataManedger.GetShortName();
 
        AtionsSystem.UpdateValueForDataStore.Invoke();
+
+        SendWayPoints();
     }
+
+
+    public void ShowErrorMessage(string text)
+    {
+        ErrorText.SetActive(true);
+        ErrorText.GetComponent<Text>().text = text;
+    }
+    public void DisableErrorMessage()
+    {
+        ErrorText.SetActive(false);
+    }
+
     #endregion
 
     #region ћетоды манипул€ции с картой
@@ -78,7 +97,6 @@ public class DataStore : MonoBehaviour
         {
             Debug.Log("Error on load current way for name" + name);
         }
-        SendWay();
 
         AtionsSystem.UpdateValueForDataStore.Invoke();
     }
@@ -156,8 +174,8 @@ public class DataStore : MonoBehaviour
         {
             Debug.Log("Error on load current way by id 0");
         }
-        SendWay();
         AtionsSystem.UpdateValueForDataStore.Invoke();
+        SendWayPoints();
     }
 
     /// <summary>
@@ -225,67 +243,45 @@ public class DataStore : MonoBehaviour
     #endregion
 
     #region ћетоды дл€ сети
-    private bool HandControl = false;
-    public void SendAutoWay(bool state)
+    public void SetXValueStick(float value)
     {
-        SendMessage msg = new SendMessage();
-        msg.CreateStateWayAutoSend(state);
-
-        if (state)
-            HandControl = false;
-
-        NetSkript.SendMessageFromSocket(msg);
+        JoyStickValue.x = value;
+        SendValueStick();
     }
-    public void SendHandoWay(bool state)
+    public void SetYValueStick(float value)
     {
-        SendMessage msg = new SendMessage();
-        msg.CreateStateWayHandSend(state);
-        HandControl = state;
-
-        NetSkript.SendMessageFromSocket(msg);
+        JoyStickValue.y = value;
+        SendValueStick();
+    }
+    public void SendValueStick()
+    {
+        _netSkript.SendMessageJoyMsg(JoyStickValue, ButtonsStatus[0], ButtonsStatus[1]);
     }
 
-    private void SendWay()
+    private void SendWayPoints()
     {
-        SendMessage msg = new SendMessage();
-        msg.CreateWaySend(CurrentWay);
-
-        NetSkript.SendMessageFromSocket(msg);
+        _netSkript.SendMessageWay(CurrentWay.positionWayPoints);
     }
 
-    public void SendJoystick(Vector2 value)
-    {
-        Task.Run(() => {
-            if (HandControl && (value.x != float.PositiveInfinity && value.y != float.NegativeInfinity) && (value.y != float.PositiveInfinity && value.x != float.NegativeInfinity))
-            {
-                SendMessage msg = new SendMessage();
-                msg.CreateJoystickSend(value);
 
-                NetSkript.SendMessageFromSocket(msg);
-            }
-        });
-        
+    public void SetAdressServer(string ip, int port)
+    {
+        _netSkript.IpAdres = ip;
+        _netSkript.port = port;
+        _netSkript.ReInit();
     }
 
-    static ReceiveMessage PosMessage = null;
-    public static void SetCharaterTransform(ReceiveMessage msg)
+    public string GetIPServer()
     {
-        PosMessage = msg;
+        return _netSkript.IpAdres;
     }
 
-    private void Update()
+    public int GetPortServer()
     {
-        NetSkript.ReceiveMessageFromSocket();
-        if (PosMessage != null)
-        {
-            CharacterPosition = new Vector2(Convert.ToSingle(PosMessage.values[0]), Convert.ToSingle(PosMessage.values[1]));
-            CharacterDirection = Convert.ToSingle(PosMessage.values[2]);
-            AtionsSystem.UpdateValueOnCharacter();
-            PosMessage = null;
-        }
+        return _netSkript.port;
     }
 
-    public static void EndWaySend()
+    public void EndAutoWay()
     {
         GameObject.FindGameObjectWithTag("EndWayCB").GetComponent<CheakBox_UI>().OffBoxWithoutEvent();
     }

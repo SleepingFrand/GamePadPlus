@@ -1,181 +1,113 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Net;
-using System.Net.Sockets;
-using Newtonsoft.Json;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using UnityEngine.Events;
+using Unity.Robotics.ROSTCPConnector;
+using RosMessageTypes.Std;
+using RosMessageTypes.Geometry;
+using RosMessageTypes.Sensor;
 
-
-[System.Serializable]
-public class SendMessage
-{
-    public string name;
-    public List<object> values;
-
-    [System.NonSerialized]
-    private string json;
-
-    public void CreateWaySend(WAY way)
-    {
-        name = "WayPoints";
-        values = new List<object>();
-        values.Add(new List<float>());
-        values.Add(new List<float>());
-        foreach (Vector2 item in way.positionWayPoints)
-        {
-            (values[0] as List<float>).Add(item.x);
-            (values[1] as List<float>).Add(item.y);
-        }
-        CreateJson();
-    }
-
-    public void CreateStateWayAutoSend(bool start)
-    {
-        if (start)
-            name = "Start";
-        else
-            name = "Stop";
-
-        name += "Way";
-        values = new List<object>();
-        CreateJson();
-    }
-
-    public void CreateStateWayHandSend(bool start)
-    {
-        if (start)
-            name = "Start";
-        else
-            name = "Stop";
-
-        name += "Control";
-        values = new List<object>();
-        CreateJson();
-    }
-
-    public void CreateJoystickSend(Vector2 value)
-    {
-        name = "JoystickValue";
-
-        values = new List<object>();
-
-        values.Add(value.x);
-        values.Add(value.y);
-
-        CreateJson();
-    }
-
-    private void CreateJson()
-    {
-        json = JsonConvert.SerializeObject(this);
-    }
-
-    public byte[] GetByteFromJSON()
-    {
-        return Encoding.UTF8.GetBytes(json);
-    }
-}
-[System.Serializable]
-public class ReceiveMessage
-{
-    public string name;
-    public List<object> values = new List<object>();
-
-    public void SetValueFromJSON(byte[] json)
-    {
-        ReceiveMessage temp = JsonConvert.DeserializeObject<ReceiveMessage>(System.Text.Encoding.UTF8.GetString(json));
-        if(temp.name == "CharacterPosition" || temp.name == "EndWay")
-        {
-            this.name = temp.name;
-            values = temp.values;
-        }
-    }
-
-    
-}
 
 public class NetSkript : MonoBehaviour
 {
-    private static IPHostEntry ipHost;
-    private static IPAddress ipAddr;
-    private static int PortSend = 11000;
-    private static int PortReceive = 11001;
+    [SerializeField] private JoyMsg MSGjoystickMsg;
+    [SerializeField] private PointCloudMsg WayPointsMsg;
 
-    static bool dataReading = true;
+    public string IpAdres = "127.0.0.1";
+    public int port = 10000;
 
-    static Socket Receiver;
-    static byte[] buffer = new byte[1024];
-    public static void Init()
+    private ROSConnection ros;
+    private List<string> topicNames = new List<string>(){ "JoyMsg", "WayPoints" };
+    public bool Connected { get; private set; } = false;
+
+    private DataStore _dataStore;
+    private void Start()
     {
-        ipHost = Dns.GetHostEntry("localhost");
-        ipAddr = ipHost.AddressList[1];
-        Receiver = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, PortReceive);
-        Receiver.Bind(ipEndPoint);
-        Receiver.Listen(100);
+        _dataStore = FindObjectOfType<DataStore>();
+        Init();
     }
-
-
-
-    public static void ReceiveMessageFromSocket()
+    private void Update()
     {
-        if (dataReading)
+        if (!Connected)
         {
-
-            dataReading = false;
-            Task.Run(() =>
-            {
-                // Программа приостанавливается, ожидая входящее соединение
-                Socket handler = Receiver.Accept();
-                string data = null;
-
-                // Мы дождались клиента, пытающегося с нами соединиться
-
-                ReceiveMessage msg = new ReceiveMessage();
-                byte[] bytes = new byte[1024];
-                int bytesRec = handler.Receive(bytes);
-
-                msg.SetValueFromJSON(bytes);
-                if (msg.name == "CharacterPosition")
-                    DataStore.SetCharaterTransform(msg);
-                else if (msg.name == "EndWay")
-                    DataStore.EndWaySend();
-
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
-                dataReading = true;
-            });
-            
+            Init();
+        }
+        else
+        {
+            _dataStore.ShowErrorMessage("Error connecting to server...");
         }
     }
-
-    public static void SendMessageFromSocket(SendMessage Message)
+    private void Init()
     {
-        // Буфер для входящих данных
-        byte[] bytes = new byte[1024];
+        try
+        {
+            ros = ROSConnection.GetOrCreateInstance();
+            ros.ShowHud = false;
+            ros.Connect(IpAdres, port);
+            ros.RegisterPublisher<JoyMsg>(topicNames[0]);
+            ros.RegisterPublisher<PointCloudMsg>(topicNames[1]);
+            ROSConnection.GetOrCreateInstance().Subscribe<PoseMsg>("CharacterPose", SetCharacterPosition);
+            ROSConnection.GetOrCreateInstance().Subscribe<JoyMsg>("EndWay", SetWayStatusEnd);
+            Connected = true;
+            _dataStore.DisableErrorMessage();
+        }
+        catch (System.Exception e)
+        {
+            Connected = false;
+            _dataStore.ShowErrorMessage("Error connecting to server...");
+        }
+    }
+    public void ReInit()
+    {
+        ros.Disconnect();
+        ros.Connect(IpAdres, port);
+    }
 
-        // Соединяемся с удаленным устройством
-
-        // Устанавливаем удаленную точку для сокета
-        IPHostEntry ipHost = Dns.GetHostEntry("localhost");
-        IPAddress ipAddr = ipHost.AddressList[1];
-        IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, PortSend);
-
-        Socket sender = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-        // Соединяем сокет с удаленной точкой
-        sender.Connect(ipEndPoint);
-
-        byte[] msg = Message.GetByteFromJSON();
-
-        // Отправляем данные через сокет
-        int bytesSent = sender.Send(msg);
+    public void SendMessageJoyMsg(Vector2 JoyStick, int AutoContol, int HandContol)
+    {
+        if (Connected)
+            try
+            {
+                float[] axes = new float[] { JoyStick.x, JoyStick.y };
+                int[] bottoms = new int[] { AutoContol, HandContol };
+                MSGjoystickMsg = new JoyMsg(new HeaderMsg(), axes, bottoms);
+                ros.Publish(topicNames[0], MSGjoystickMsg);
+                _dataStore.DisableErrorMessage();
+            }
+            catch
+            {
+                _dataStore.ShowErrorMessage("Error send JoyMsg to server!");
+            }
+    }
+    public void SendMessageWay(List<Vector2> points)
+    {
+        if (Connected)
+            try
+            {
+                List<Point32Msg> Point = new List<Point32Msg>();
+                foreach (Vector2 item in points)
+                {
+                    Point.Add(new Point32Msg(item.x, item.y, 0));
+                }
+                WayPointsMsg = new PointCloudMsg(new HeaderMsg(), Point.ToArray(), new ChannelFloat32Msg[0]);
+                ros.Publish(topicNames[1], WayPointsMsg);
+                _dataStore.DisableErrorMessage();
+            }
+            catch
+            {
+                _dataStore.ShowErrorMessage("Error send PointCloudMsg to server!");
+            }
         
-        // Освобождаем сокет
-        sender.Shutdown(SocketShutdown.Both);
-        sender.Close();
+    }
+
+    private void SetCharacterPosition(PoseMsg pose)
+    {
+        _dataStore.CharacterPosition = new Vector2((float)pose.position.x, (float)pose.position.y);
+        _dataStore.CharacterDirection = new Quaternion((float)pose.orientation.x, (float)pose.orientation.y, (float)pose.orientation.z, (float)pose.orientation.w);
+    }
+    private void SetWayStatusEnd(JoyMsg joy)
+    {
+        if (joy.buttons[1] == 0)
+        {
+            _dataStore.EndAutoWay();
+        }
     }
 }
