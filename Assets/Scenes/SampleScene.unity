@@ -1011,7 +1011,7 @@ RectTransform:
   - {fileID: 1886739180}
   - {fileID: 948981734}
   m_Father: {fileID: 665167168}
-  m_RootOrder: 12
+  m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.3}
   m_AnchorMax: {x: 1, y: 1}
@@ -1540,7 +1540,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 665167168}
-  m_RootOrder: 13
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
@@ -2010,9 +2010,9 @@ RectTransform:
   - {fileID: 601465799}
   - {fileID: 691688636}
   - {fileID: 289011983}
+  - {fileID: 557214898}
   - {fileID: 1296301025}
   - {fileID: 425906494}
-  - {fileID: 557214898}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4626,7 +4626,7 @@ RectTransform:
   - {fileID: 1001800717}
   - {fileID: 1895416568}
   m_Father: {fileID: 665167168}
-  m_RootOrder: 11
+  m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -8149,6 +8149,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: H stick
       objectReference: {fileID: 0}
+    - target: {fileID: 5736577945021220429, guid: 8ae1c39006c16b543bc2b0f51abd5aea, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5752510338898288876, guid: 8ae1c39006c16b543bc2b0f51abd5aea, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8261,6 +8265,10 @@ PrefabInstance:
     - target: {fileID: 6737998407956662180, guid: b736d90613e03704d942d7f75e257a68, type: 3}
       propertyPath: m_Name
       value: V stick
+      objectReference: {fileID: 0}
+    - target: {fileID: 6737998407956662180, guid: b736d90613e03704d942d7f75e257a68, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6758569650251391237, guid: b736d90613e03704d942d7f75e257a68, type: 3}
       propertyPath: m_Pivot.x
